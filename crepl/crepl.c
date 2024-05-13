@@ -42,7 +42,11 @@ int main(int argc, char *argv[]) {
             fp=fopen("/tmp/code.c","a");
             fprintf(fp,"%s\n",line);
             fclose(fp);
+            #ifdef __x86_64__
             char *args[]={"gcc", "-shared", "-fPIC", "-o", "/tmp/code.so", "/tmp/code.c", NULL};
+            #else
+            char *args[]={"gcc", "-m32","-shared", "-fPIC", "-o", "/tmp/code.so", "/tmp/code.c", NULL};
+            #endif
             pid=fork();
             if(!pid){
                 execvp("gcc",args);
@@ -60,7 +64,11 @@ int main(int argc, char *argv[]) {
             fp=fopen("/tmp/code.c","a");
             fprintf(fp,"%s\n",func);
             fclose(fp);
+            #ifdef __x86_64__
             char *args[]={"gcc", "-shared", "-fPIC", "-o", "/tmp/code.so", "/tmp/code.c", NULL};
+            #else
+            char *args[]={"gcc", "-m32","-shared", "-fPIC", "-o", "/tmp/code.so", "/tmp/code.c", NULL};
+            #endif
             pid=fork();
             if(!pid){
                 execvp("gcc",args);
@@ -85,6 +93,6 @@ int main(int argc, char *argv[]) {
             printf("%d\n",foo());
             dlclose(handle);
         }
-        printf("Got %zu chars.\n", strlen(line));
+        //printf("Got %zu chars.\n", strlen(line));
     }
 }
