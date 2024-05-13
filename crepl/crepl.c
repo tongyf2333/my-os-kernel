@@ -3,10 +3,11 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 int main(int argc, char *argv[]) {
     static char line[4096];
-    int cnt=0;
+    int cnt=0,status;
     __pid_t pid;
 
     FILE *fp;
@@ -18,6 +19,7 @@ int main(int argc, char *argv[]) {
         execvp("rm",args);
         exit(0);
     }
+    else waitpid(pid,&status,0);
     fp=fopen("/tmp/code.so","a");
     fclose(fp);
     char *args1[]={"rm", "/tmp/code.so", NULL};
@@ -26,6 +28,7 @@ int main(int argc, char *argv[]) {
         execvp("rm",args1);
         exit(0);
     }
+    else waitpid(pid,&status,0);
 
     while (1) {
         printf("crepl> ");
@@ -45,6 +48,7 @@ int main(int argc, char *argv[]) {
                 execvp("gcc",args);
                 exit(0);
             }
+            else waitpid(pid,&status,0);
         }
         else{
             cnt++;
@@ -62,7 +66,7 @@ int main(int argc, char *argv[]) {
                 execvp("gcc",args);
                 exit(0);
             }
-            printf("QAQ\n");
+            else waitpid(pid,&status,0);
             void *handle;
             int (*foo)(void);
             char *error;
@@ -72,15 +76,12 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             dlerror();
-            printf("QAQ\n");
             foo=dlsym(handle, name);
-            printf("QAQ\n");
             if ((error = dlerror()) != NULL)  {
                 fprintf(stderr, "%s\n", error);
                 dlclose(handle);
                 return 1;
             }
-            printf("QAQ\n");
             printf("%d\n",foo());
             dlclose(handle);
         }
