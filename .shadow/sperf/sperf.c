@@ -2,6 +2,29 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
+#include <regex.h>
+
+double tim[4096];
+int tot;
+
+void parseNumbersInAngleBrackets(const char *str) {
+    char bf[4096];
+    regex_t regex;
+    int reti;
+    int match=2;
+    regmatch_t mch[5];
+    reti = regcomp(&regex, "<(-?[0-9]+(\\.[0-9]+)?)>", REG_EXTENDED);
+    reti = regexec(&regex, str, match, mch, 0);
+    if(reti==REG_NOMATCH) return;
+    for (int i=0;i<match&&mch[i].rm_so!=-1;i++){
+        strncpy(bf, str+mch[i].rm_so, mch[i].rm_eo-mch[i].rm_so);
+        bf[mch[i].rm_eo-mch[i].rm_so]=0;
+        double db=atof(bf);
+        if(db!=0.0) tim[++tot]=db;
+    }
+    regfree(&regex);
+}
 
 int main(int argc, char *argv[]) {
     int pipefd[2];
@@ -28,13 +51,16 @@ int main(int argc, char *argv[]) {
         close(pipefd[1]);
         char buffer[4096];
         ssize_t bytesRead;
-        int cnt=0;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            //write(STDOUT_FILENO, buffer, bytesRead);
-            cnt++;
+            write(STDOUT_FILENO, buffer, bytesRead);
+            parseNumbersInAngleBrackets(buffer);
+            memset(buffer,0,sizeof(buffer));
+            //printf("\n");
+            fflush(stdout);
         }
         close(pipefd[0]);
-        printf("%d\n",cnt);
+        printf("%d\n",tot);
+        for(int i=1;i<=tot;i++) printf("%lf\n",tim[i]);
     }
     return 0;
 }
