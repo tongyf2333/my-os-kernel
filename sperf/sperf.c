@@ -4,11 +4,53 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <time.h>
 
 double tim[4096];
 int tot;
+char cur[4096];
 
-void parseNumbersInAngleBrackets(const char *str) {
+typedef struct node{
+    char *name;
+    double time;
+}node;
+node table[10005],temp[10005];
+int cnt=0;
+int cmp(node a,node b){
+    return a.time>b.time;
+}
+void add(double val){
+    int find=0;
+    for(int i=1;i<=cnt;i++){
+        if(strcmp(cur,table[i].name)==0){
+            table[i].time+=val;
+            find=1;
+            break;
+        }
+    }
+    if(!find){
+        table[++cnt].name=malloc(4096);
+        strcpy(table[cnt].name,cur);
+        table[cnt].time=val;
+    }
+}
+void merge(int l,int r){
+	if(l==r) return;
+	int mid=(l+r)/2;
+	merge(l,mid);
+	merge(mid+1,r);
+	int hd=l,tl=mid+1,now=l;
+	while(hd<=mid&&tl<=r){
+		if(cmp(table[hd],table[tl])) temp[now++]=table[hd++];
+		else temp[now++]=table[tl++];
+	}
+	while(hd<=mid) temp[now++]=table[hd++];
+	while(tl<=r) temp[now++]=table[tl++];
+	for(int i=l;i<=r;i++) table[i]=temp[i];
+}
+
+
+void gettim(const char *str) {
     char bf[4096];
     regex_t regex;
     int reti;
@@ -21,12 +63,25 @@ void parseNumbersInAngleBrackets(const char *str) {
         strncpy(bf, str+mch[i].rm_so, mch[i].rm_eo-mch[i].rm_so);
         bf[mch[i].rm_eo-mch[i].rm_so]=0;
         double db=atof(bf);
-        if(db!=0.0) tim[++tot]=db;
+        if(db!=0.0){
+            tim[++tot]=db;
+            add(tim[tot]);
+        }
     }
     regfree(&regex);
 }
 
+void getname(const char *str){
+    const char *pos=strchr(str,'(');
+    if(pos==NULL) return;
+    else if((str[0]<'a')||(str[0]>'z')) return;
+    strncpy(cur,str,pos-str);
+    cur[pos-str]='\0';
+    //printf(" got string: %s\n",cur);
+}
+
 int main(int argc, char *argv[]) {
+    __clock_t start=clock();
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -52,15 +107,16 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            write(STDOUT_FILENO, buffer, bytesRead);
-            parseNumbersInAngleBrackets(buffer);
+            //write(STDOUT_FILENO, buffer, bytesRead);
+            getname(buffer);
+            gettim(buffer);
             memset(buffer,0,sizeof(buffer));
             //printf("\n");
             fflush(stdout);
         }
         close(pipefd[0]);
-        printf("%d\n",tot);
-        for(int i=1;i<=tot;i++) printf("%lf\n",tim[i]);
+        printf("%d\n",cnt);
+        for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
     }
     return 0;
 }
