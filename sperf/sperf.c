@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 
 const char *nul="\0";
+const double eps=1e-9;
 double sum;
 int tot;
 char cur[4096];
@@ -19,7 +20,7 @@ typedef struct node{
 node table[10005],temp[10005];
 int cnt=0;
 int cmp(node a,node b){
-    return a.time>b.time;
+    return a.time-b.time>eps;
 }
 void add(double val){
     int find=0;
@@ -79,7 +80,6 @@ void getname(const char *str){
     else if((str[0]<'a')||(str[0]>'z')) return;
     strncpy(cur,str,pos-str);
     cur[pos-str]='\0';
-    //printf(" got string: %s\n",cur);
 }
 
 int main(int argc, char *argv[]) {
@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
-            fflush(stdout);
             __clock_t now=clock();
             if((now-cur)*1000/CLOCKS_PER_SEC>=100){
                 merge(1,cnt);
@@ -127,6 +126,7 @@ int main(int argc, char *argv[]) {
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
                 }
                 for(int i=1;i<=80;i++) printf("%s",nul);
+                fflush(stdout);
             }
         }
         close(pipefd[0]);
@@ -135,6 +135,7 @@ int main(int argc, char *argv[]) {
             printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
         }
         for(int i=1;i<=80;i++) printf("%s",nul);
+        fflush(stdout);
     }
     return 0;
 }
