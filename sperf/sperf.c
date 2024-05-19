@@ -5,6 +5,7 @@
 #include <string.h>
 #include <regex.h>
 #include <time.h>
+#include <dlfcn.h>
 
 const char *nul="\0";
 double sum;
@@ -100,20 +101,21 @@ int main(int argc, char *argv[]) {
             exec_argv[i+1]=argv[i];
         }
         exec_argv[argc+1]=NULL;
-        char *pth=getenv("PATH");
+        /*char *pth=getenv("PATH");
         char ss[4096];
         sprintf(ss,"PATH=%s",pth);
-        //printf("%s\n",ss);
         char *exec_envp[]={ss,NULL,};
         execve("strace",          exec_argv, exec_envp);
         execve("/bin/strace",     exec_argv, exec_envp);
-        execve("/usr/bin/strace", exec_argv, exec_envp);
+        execve("/usr/bin/strace", exec_argv, exec_envp);*/
+        execvp("strace",exec_argv);
     }
     else{
         close(pipefd[1]);
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
+            //write(STDOUT_FILENO,buffer,bytesRead);
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
@@ -128,8 +130,6 @@ int main(int argc, char *argv[]) {
             }
         }
         close(pipefd[0]);
-        //printf("%d\n",cnt);
-        //for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
         merge(1,cnt);
         for(int i=1;i<=5;i++){
             printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
