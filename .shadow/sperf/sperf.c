@@ -79,7 +79,6 @@ void getname(const char *str){
     else if((str[0]<'a')||(str[0]>'z')) return;
     strncpy(cur,str,pos-str);
     cur[pos-str]='\0';
-    //printf(" got string: %s\n",cur);
 }
 
 int main(int argc, char *argv[]) {
@@ -108,22 +107,6 @@ int main(int argc, char *argv[]) {
         execve("strace",          exec_argv, exec_envp);
         execve("/bin/strace",     exec_argv, exec_envp);
         execve("/usr/bin/strace", exec_argv, exec_envp);*/
-        /*void *handle;
-        int (*foo)(const char*,char *const *);
-        char *error;
-        handle = dlopen("/usr/lib32/libc.so.6", RTLD_LAZY);
-        if (!handle) {
-            fprintf(stderr, "%s\n", dlerror());
-            return 1;
-        }
-        dlerror();
-        foo=dlsym(handle,"execvp");
-        if ((error = dlerror()) != NULL)  {
-            fprintf(stderr, "%s\n", error);
-            dlclose(handle);
-        }
-        foo("strace",exec_argv);
-        dlclose(handle);*/
         execvp("strace",exec_argv);
     }
     else{
@@ -135,7 +118,6 @@ int main(int argc, char *argv[]) {
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
-            fflush(stdout);
             __clock_t now=clock();
             if((now-cur)*1000/CLOCKS_PER_SEC>=100){
                 merge(1,cnt);
@@ -143,16 +125,16 @@ int main(int argc, char *argv[]) {
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
                 }
                 for(int i=1;i<=80;i++) printf("%s",nul);
+                fflush(stdout);
             }
         }
         close(pipefd[0]);
-        //printf("%d\n",cnt);
-        //for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
         merge(1,cnt);
         for(int i=1;i<=5;i++){
             printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
         }
         for(int i=1;i<=80;i++) printf("%s",nul);
+        fflush(stdout);
     }
     return 0;
 }
