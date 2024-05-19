@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 
 const char *nul="\0";
+const double eps=1e-9;
 double sum;
 int tot;
 char cur[4096];
@@ -19,7 +20,7 @@ typedef struct node{
 node table[10005],temp[10005];
 int cnt=0;
 int cmp(node a,node b){
-    return a.time>b.time;
+    return a.time-b.time>eps;
 }
 void add(double val){
     int find=0;
