@@ -6,7 +6,8 @@
 #include <regex.h>
 #include <time.h>
 
-double tim[4096];
+const char *nul="\0";
+double sum;
 int tot;
 char cur[4096];
 
@@ -33,6 +34,7 @@ void add(double val){
         strcpy(table[cnt].name,cur);
         table[cnt].time=val;
     }
+    sum+=val;
 }
 void merge(int l,int r){
 	if(l==r) return;
@@ -64,8 +66,7 @@ void gettim(const char *str) {
         bf[mch[i].rm_eo-mch[i].rm_so]=0;
         double db=atof(bf);
         if(db!=0.0){
-            tim[++tot]=db;
-            add(tim[tot]);
+            add(db);
         }
     }
     regfree(&regex);
@@ -81,7 +82,7 @@ void getname(const char *str){
 }
 
 int main(int argc, char *argv[]) {
-    __clock_t start=clock();
+    __clock_t cur=clock();
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -107,16 +108,27 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            //write(STDOUT_FILENO, buffer, bytesRead);
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
-            //printf("\n");
             fflush(stdout);
+            __clock_t now=clock();
+            if((now-cur)*1000/CLOCKS_PER_SEC>=100){
+                merge(1,cnt);
+                for(int i=1;i<=5;i++){
+                    printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+                }
+                for(int i=1;i<=80;i++) printf("%s",nul);
+            }
         }
         close(pipefd[0]);
-        printf("%d\n",cnt);
-        for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
+        //printf("%d\n",cnt);
+        //for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
+        merge(1,cnt);
+        for(int i=1;i<=5;i++){
+            printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+        }
+        for(int i=1;i<=80;i++) printf("%s",nul);
     }
     return 0;
 }
