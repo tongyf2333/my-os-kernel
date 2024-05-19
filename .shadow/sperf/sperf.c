@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <time.h>
 
-double tim[4096];
+const char *nul="\0";
+double sum;
 int tot;
 char cur[4096];
 
@@ -14,24 +16,25 @@ typedef struct node{
     double time;
 }node;
 node table[10005],temp[10005];
-int cnt;
+int cnt=0;
 int cmp(node a,node b){
     return a.time>b.time;
 }
-void add(const char *str,double val){
-    printf("QAQ\n");
+void add(double val){
     int find=0;
     for(int i=1;i<=cnt;i++){
-        if(strcmp(str,table[i].name)==0){
+        if(strcmp(cur,table[i].name)==0){
             table[i].time+=val;
             find=1;
             break;
         }
     }
     if(!find){
-        table[++cnt].name=(char *)str;
+        table[++cnt].name=malloc(4096);
+        strcpy(table[cnt].name,cur);
         table[cnt].time=val;
     }
+    sum+=val;
 }
 void merge(int l,int r){
 	if(l==r) return;
@@ -63,32 +66,23 @@ void gettim(const char *str) {
         bf[mch[i].rm_eo-mch[i].rm_so]=0;
         double db=atof(bf);
         if(db!=0.0){
-            tim[++tot]=db;
-            add(cur,tim[tot]);
+            add(db);
         }
     }
     regfree(&regex);
 }
 
 void getname(const char *str){
-    regex_t regex;
-    int reti;
-    int match=2;
-    regmatch_t mch[5];
-    printf("QAQ\n");
-    reti = regcomp(&regex, "^\\w+(?=\\()", REG_EXTENDED);
-    printf("QAQ\n");
-    reti = regexec(&regex, str, match, mch, 0);
-    if(reti==REG_NOMATCH) return;
-    for (int i=0;i<match&&mch[i].rm_so!=-1;i++){
-        printf("QAQ\n");
-        strncpy(cur, str+mch[i].rm_so, mch[i].rm_eo-mch[i].rm_so);
-        //printf("name:%s\n",cur);
-    }
-    regfree(&regex);
+    const char *pos=strchr(str,'(');
+    if(pos==NULL) return;
+    else if((str[0]<'a')||(str[0]>'z')) return;
+    strncpy(cur,str,pos-str);
+    cur[pos-str]='\0';
+    //printf(" got string: %s\n",cur);
 }
 
 int main(int argc, char *argv[]) {
+    __clock_t cur=clock();
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -114,17 +108,27 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            write(STDOUT_FILENO, buffer, bytesRead);
-            printf("QAQ\n");
             getname(buffer);
-            printf("QAQ\n");
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
             fflush(stdout);
+            __clock_t now=clock();
+            if((now-cur)*1000/CLOCKS_PER_SEC>=100){
+                merge(1,cnt);
+                for(int i=1;i<=5;i++){
+                    printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+                }
+                for(int i=1;i<=80;i++) printf("%s",nul);
+            }
         }
         close(pipefd[0]);
-        printf("%d\n",cnt);
-        for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
+        //printf("%d\n",cnt);
+        //for(int i=1;i<=cnt;i++) printf("%s %lf\n",table[i].name,table[i].time);
+        merge(1,cnt);
+        for(int i=1;i<=5;i++){
+            printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+        }
+        for(int i=1;i<=80;i++) printf("%s",nul);
     }
     return 0;
 }
