@@ -99,9 +99,15 @@ int main(int argc, char *argv[]) {
         for(int i=1;i<argc;i++){
             exec_argv[i+1]=argv[i];
         }
-        char *exec_envp[]={"PATH=/bin",NULL,};
-        execve("/bin/strace",exec_argv, exec_envp);
-        
+        exec_argv[argc+1]=NULL;
+        char *pth=getenv("PATH");
+        char ss[4096];
+        sprintf(ss,"PATH=%s",pth);
+        //printf("%s\n",ss);
+        char *exec_envp[]={ss,NULL,};
+        execve("strace",          exec_argv, exec_envp);
+        execve("/bin/strace",     exec_argv, exec_envp);
+        execve("/usr/bin/strace", exec_argv, exec_envp);
     }
     else{
         close(pipefd[1]);
