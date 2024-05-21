@@ -81,7 +81,6 @@ void getname(const char *str){
     int match=2;
     regmatch_t mch[5];
     reti = regcomp(&regex, "(-?[0-9]+(\\.[0-9]+)?)", REG_EXTENDED);
-    //if(reti) printf("fuck\n");
     reti = regexec(&regex, str, match, mch, 0);
     if(reti==REG_NOMATCH) return;
     int i;
@@ -92,7 +91,6 @@ void getname(const char *str){
         if(db!=0.0){
             if(lasttime==0.0) lasttime=db;
             curtime=db;
-            //printf("get time:%lf\n",curtime);
             break;
         }
     }
@@ -104,10 +102,10 @@ void getname(const char *str){
     else if((current[0]<'a')||(current[0]>'z')) return;
     strncpy(cur,current,pos-current);
     cur[pos-current]='\0';
-    //printf("get string:%s\n",cur);
 }
 
 int main(int argc, char *argv[]) {
+    clock_t now=clock();
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -133,22 +131,22 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            /*write(STDOUT_FILENO,buffer,bytesRead);
-            printf("\n");
-            fflush(stdout);*/
+            //write(STDOUT_FILENO,buffer,bytesRead);
             if(bytesRead==0) continue;
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
             fflush(stdout);
-            if(curtime-lasttime>0.1){
+            clock_t curt=clock();
+            if(/*curtime-lasttime>0.1*/(curt-now)*1000/CLOCKS_PER_SEC>=100){
                 merge(1,cnt);
                 for(int i=1;i<=5;i++){
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
                 }
                 for(int i=1;i<=80;i++) printf("%s",nul);
                 fflush(stdout);
-                lasttime=curtime;
+                //lasttime=curtime;
+                now=curt;
             }
         }
         close(pipefd[0]);
