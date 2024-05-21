@@ -116,6 +116,7 @@ int main(int argc, char *argv[]) {
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
             //write(STDOUT_FILENO,buffer,bytesRead);
+            if(bytesRead==0) continue;
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
