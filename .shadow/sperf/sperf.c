@@ -123,7 +123,8 @@ int main(int argc, char *argv[]) {
         for(int i=1;i<argc;i++){
             exec_argv[i+2]=argv[i];
         }
-        exec_argv[argc+2]=NULL;
+        exec_argv[argc+2]="2>&1";
+        exec_argv[argc+3]=NULL;
         execvp("strace",exec_argv);
     }
     else{
