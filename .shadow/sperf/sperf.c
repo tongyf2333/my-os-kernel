@@ -123,8 +123,9 @@ int main(int argc, char *argv[]) {
         for(int i=1;i<argc;i++){
             exec_argv[i+2]=argv[i];
         }
-        exec_argv[argc+2]="2>&1";
-        exec_argv[argc+3]=NULL;
+        //exec_argv[argc+2]="2>&1";
+        //exec_argv[argc+3]=NULL;
+        exec_argv[argc+2]=NULL;
         execvp("strace",exec_argv);
     }
     else{
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
             memset(buffer,0,sizeof(buffer));
             fflush(stdout);
             clock_t curt=clock();
-            if(/*curtime-lasttime>0.1*/(curt-now)*1000/CLOCKS_PER_SEC>=100){
+            if((curt-now)*1000/CLOCKS_PER_SEC>=100){
                 merge(1,cnt);
                 for(int i=1;i<=5;i++){
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
