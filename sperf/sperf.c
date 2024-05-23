@@ -9,7 +9,7 @@
 
 const char *nul="\0";
 const double eps=1e-9;
-double sum;
+double sum,curtime,lasttime=0.0;
 int tot;
 char cur[4096];
 
@@ -75,15 +75,37 @@ void gettim(const char *str) {
 }
 
 void getname(const char *str){
-    const char *pos=strchr(str,'(');
+    char bf[4096];
+    regex_t regex;
+    int reti;
+    int match=2;
+    regmatch_t mch[5];
+    reti = regcomp(&regex, "(-?[0-9]+(\\.[0-9]+)?)", REG_EXTENDED);
+    reti = regexec(&regex, str, match, mch, 0);
+    if(reti==REG_NOMATCH) return;
+    int i;
+    for (i=0;i<match&&mch[i].rm_so!=-1;i++){
+        strncpy(bf, str+mch[i].rm_so, mch[i].rm_eo-mch[i].rm_so);
+        bf[mch[i].rm_eo-mch[i].rm_so]=0;
+        double db=atof(bf);
+        if(db!=0.0){
+            if(lasttime==0.0) lasttime=db;
+            curtime=db;
+            break;
+        }
+    }
+    regfree(&regex);
+
+    const char *current=str+mch[i].rm_eo+sizeof(char);
+    const char *pos=strchr(current,'(');
     if(pos==NULL) return;
-    else if((str[0]<'a')||(str[0]>'z')) return;
-    strncpy(cur,str,pos-str);
-    cur[pos-str]='\0';
+    else if((current[0]<'a')||(current[0]>'z')) return;
+    strncpy(cur,current,pos-current);
+    cur[pos-current]='\0';
 }
 
 int main(int argc, char *argv[]) {
-    __clock_t cur=clock();
+    clock_t now=clock();
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -97,12 +119,13 @@ int main(int argc, char *argv[]) {
         char *exec_argv[4096];
         exec_argv[0]="strace";
         exec_argv[1]="-T";
+        exec_argv[2]="-ttt";
         for(int i=1;i<argc;i++){
-            exec_argv[i+1]=argv[i];
+            exec_argv[i+2]=argv[i];
         }
-        //exec_argv[argc+1]="2>&1";
-        //exec_argv[argc+2]=NULL;
-        exec_argv[argc+1]=NULL;
+        //exec_argv[argc+2]="2>&1";
+        //exec_argv[argc+3]=NULL;
+        exec_argv[argc+2]=NULL;
         execvp("strace",exec_argv);
     }
     else{
@@ -115,14 +138,17 @@ int main(int argc, char *argv[]) {
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
-            __clock_t now=clock();
-            if((now-cur)*1000/CLOCKS_PER_SEC>=100){
+            fflush(stdout);
+            clock_t curt=clock();
+            if((curt-now)*1000/CLOCKS_PER_SEC>=100){
                 merge(1,cnt);
                 for(int i=1;i<=5;i++){
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
                 }
                 for(int i=1;i<=80;i++) printf("%s",nul);
                 fflush(stdout);
+                //lasttime=curtime;
+                now=curt;
             }
         }
         close(pipefd[0]);
