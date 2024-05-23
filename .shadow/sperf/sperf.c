@@ -11,13 +11,13 @@ const char *nul="\0";
 const double eps=1e-9;
 double sum,curtime,lasttime=0.0;
 int tot;
-char cur[40096];
+char cur[4096];
 
 typedef struct node{
     char *name;
     double time;
 }node;
-node table[100005],temp[100005];
+node table[10005],temp[10005];
 int cnt=0;
 int cmp(node a,node b){
     return a.time-b.time>eps;
@@ -55,7 +55,7 @@ void merge(int l,int r){
 
 
 void gettim(const char *str) {
-    char bf[40096];
+    char bf[4096];
     regex_t regex;
     int reti;
     int match=2;
@@ -75,7 +75,8 @@ void gettim(const char *str) {
 }
 
 void getname(const char *str){
-    char bf[40096];
+    if((str[0]<'0')||(str[0]>'9')) return;
+    char bf[4096];
     regex_t regex;
     int reti;
     int match=2;
@@ -84,7 +85,7 @@ void getname(const char *str){
     reti = regexec(&regex, str, match, mch, 0);
     if(reti==REG_NOMATCH) return;
     int i;
-    for (i=0;i<match&&mch[i].rm_so!=-1;i++){
+    for (i=0;i<1&&mch[i].rm_so!=-1;i++){
         strncpy(bf, str+mch[i].rm_so, mch[i].rm_eo-mch[i].rm_so);
         bf[mch[i].rm_eo-mch[i].rm_so]=0;
         double db=atof(bf);
@@ -130,7 +131,7 @@ int main(int argc, char *argv[]) {
     }
     else{
         close(pipefd[1]);
-        char buffer[40096];
+        char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
             //write(STDOUT_FILENO,buffer,bytesRead);
