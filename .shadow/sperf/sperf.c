@@ -37,6 +37,8 @@ void add(double val){
         table[cnt].time=val;
     }
     sum+=val;
+    //printf("name:%s time:%lf\n",cur,val);
+    //fflush(stdout);
 }
 void merge(int l,int r){
 	if(l==r) return;
@@ -134,8 +136,9 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            //write(STDOUT_FILENO,buffer,bytesRead);
-            if(bytesRead==0) continue;
+            /*write(STDOUT_FILENO,buffer,bytesRead);
+            printf("\n");
+            fflush(stdout);*/
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
