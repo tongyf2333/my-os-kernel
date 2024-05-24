@@ -148,6 +148,7 @@ int main(int argc, char *argv[]) {
                 merge(1,cnt);
                 for(int i=1;i<=5;i++){
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+                    fflush(stdout);
                 }
                 for(int i=1;i<=80;i++) printf("%s",nul);
                 fflush(stdout);
@@ -158,6 +159,7 @@ int main(int argc, char *argv[]) {
         merge(1,cnt);
         for(int i=1;i<=5;i++){
             printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+            fflush(stdout);
         }
         for(int i=1;i<=80;i++) printf("%s",nul);
         fflush(stdout);
