@@ -7,7 +7,7 @@
 #include <time.h>
 #include <dlfcn.h>
 
-const char *nul="\0";
+const char nul=0;
 const double eps=1e-9;
 double sum,curtime,lasttime=0.0;
 int tot;
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
                     fflush(stdout);
                 }
-                for(int i=1;i<=80;i++) printf("%s",nul);
+                for(int i=1;i<=80;i++) printf("%c",nul);
                 fflush(stdout);
                 now=curt;
             }
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
             printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
             fflush(stdout);
         }
-        for(int i=1;i<=80;i++) printf("%s",nul);
+        for(int i=1;i<=80;i++) printf("%c",nul);
         fflush(stdout);
     }
     return 0;
