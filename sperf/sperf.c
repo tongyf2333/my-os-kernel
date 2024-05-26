@@ -7,7 +7,7 @@
 #include <time.h>
 #include <dlfcn.h>
 
-const char *nul="\0";
+const char nul=0;
 const double eps=1e-9;
 double sum,curtime,lasttime=0.0;
 int tot;
@@ -37,6 +37,8 @@ void add(double val){
         table[cnt].time=val;
     }
     sum+=val;
+    //printf("name:%s time:%lf\n",cur,val);
+    //fflush(stdout);
 }
 void merge(int l,int r){
 	if(l==r) return;
@@ -75,6 +77,7 @@ void gettim(const char *str) {
 }
 
 void getname(const char *str){
+    if((str[0]<'0')||(str[0]>'9')) return;
     char bf[4096];
     regex_t regex;
     int reti;
@@ -84,7 +87,7 @@ void getname(const char *str){
     reti = regexec(&regex, str, match, mch, 0);
     if(reti==REG_NOMATCH) return;
     int i;
-    for (i=0;i<match&&mch[i].rm_so!=-1;i++){
+    for (i=0;i<1&&mch[i].rm_so!=-1;i++){
         strncpy(bf, str+mch[i].rm_so, mch[i].rm_eo-mch[i].rm_so);
         bf[mch[i].rm_eo-mch[i].rm_so]=0;
         double db=atof(bf);
@@ -123,9 +126,9 @@ int main(int argc, char *argv[]) {
         for(int i=1;i<argc;i++){
             exec_argv[i+2]=argv[i];
         }
-        //exec_argv[argc+2]="2>&1";
-        //exec_argv[argc+3]=NULL;
-        exec_argv[argc+2]=NULL;
+        exec_argv[argc+2]="> /dev/null";
+        exec_argv[argc+3]=NULL;
+        //exec_argv[argc+2]=NULL;
         execvp("strace",exec_argv);
     }
     else{
@@ -133,8 +136,9 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-            //write(STDOUT_FILENO,buffer,bytesRead);
-            if(bytesRead==0) continue;
+            /*write(STDOUT_FILENO,buffer,bytesRead);
+            printf("\n");
+            fflush(stdout);*/
             getname(buffer);
             gettim(buffer);
             memset(buffer,0,sizeof(buffer));
@@ -144,10 +148,10 @@ int main(int argc, char *argv[]) {
                 merge(1,cnt);
                 for(int i=1;i<=5;i++){
                     printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+                    fflush(stdout);
                 }
-                for(int i=1;i<=80;i++) printf("%s",nul);
+                for(int i=1;i<=80;i++) printf("%c",nul);
                 fflush(stdout);
-                //lasttime=curtime;
                 now=curt;
             }
         }
@@ -155,8 +159,9 @@ int main(int argc, char *argv[]) {
         merge(1,cnt);
         for(int i=1;i<=5;i++){
             printf("%s (%d%%)\n",table[i].name,(int)(table[i].time*100.0/sum));
+            fflush(stdout);
         }
-        for(int i=1;i<=80;i++) printf("%s",nul);
+        for(int i=1;i<=80;i++) printf("%c",nul);
         fflush(stdout);
     }
     return 0;
