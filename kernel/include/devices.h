@@ -1,3 +1,9 @@
+#include <kernel.h>
+#include <klib.h>
+#include <klib-macros.h>
+#include <am.h>
+#include <os.h>
+
 typedef struct devops {
     int (*init)(device_t *dev);
     int (*read)(device_t *dev, int offset, void *buf, int count);
