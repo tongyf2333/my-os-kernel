@@ -9,15 +9,15 @@ typedef unsigned long long ull;
 //find 2^i
 size_t find(size_t x){if(!x) return 1;x|=(x>>1);x|=(x>>2);x|=(x>>4);x|=(x>>8);x|=(x>>16);return x+1;}
 //implemented a simple spinlock
-typedef struct Spinlock{int locked;}spinlock;
-void spinlock_init(spinlock *lk){lk->locked=0;}
-void spinlock_lock(spinlock *lk){
+typedef struct Spinlock{int locked;}spin;
+void spinlock_init(spin *lk){lk->locked=0;}
+void spinlock_lock(spin *lk){
     retry:
     int status=atomic_xchg(&lk->locked,LOCKED);
     while(status!=UNLOCKED) goto retry;
 }
-void spinlock_unlock(spinlock *lk){atomic_xchg(&lk->locked,UNLOCKED);}
-static spinlock lk;
+void spinlock_unlock(spin *lk){atomic_xchg(&lk->locked,UNLOCKED);}
+static spin lk;
 //buddy system
 typedef struct buddy_node{
     struct buddy_node *next;
