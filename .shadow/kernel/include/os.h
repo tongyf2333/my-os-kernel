@@ -1,3 +1,5 @@
+#include<kernel.h>
+
 struct spinlock{
 
 };
