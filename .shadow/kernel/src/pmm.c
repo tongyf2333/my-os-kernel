@@ -1,4 +1,5 @@
 #include <common.h>
+
 #define LOCKED 1
 #define UNLOCKED 0
 #define MAGIC 12345678
@@ -8,15 +9,15 @@ typedef unsigned long long ull;
 //find 2^i
 size_t find(size_t x){if(!x) return 1;x|=(x>>1);x|=(x>>2);x|=(x>>4);x|=(x>>8);x|=(x>>16);return x+1;}
 //implemented a simple spinlock
-typedef struct Spinlock{int locked;}spinlock;
-void spinlock_init(spinlock *lk){lk->locked=0;}
-void spinlock_lock(spinlock *lk){
+typedef struct Spinlock{int locked;}spin;
+void spinlock_init(spin *lk){lk->locked=0;}
+void spinlock_lock(spin *lk){
     retry:
     int status=atomic_xchg(&lk->locked,LOCKED);
     while(status!=UNLOCKED) goto retry;
 }
-void spinlock_unlock(spinlock *lk){atomic_xchg(&lk->locked,UNLOCKED);}
-static spinlock lk;
+void spinlock_unlock(spin *lk){atomic_xchg(&lk->locked,UNLOCKED);}
+static spin lk;
 //buddy system
 typedef struct buddy_node{
     struct buddy_node *next;
@@ -256,129 +257,6 @@ static void kfree(void *ptr) {
     int logg=getlog(siz);
     slab_insert(id,logg,(intptr_t)ptr);*/
 }
-
-/*slab_node *header[12];
-
-void insert(int line,int val){
-    assert((val%(1<<line))==0);
-    assert(val<(intptr_t)heap.end);
-    slab_node *now=(slab_node*)(intptr_t)val;
-    now->next=header[line];
-    now->prev=NULL;
-    if(header[line]!=NULL) header[line]->prev=now;
-    header[line]=now;
-    if(header[line]!=NULL) assert((intptr_t)header[line]<(intptr_t)heap.end);
-    assert(header[line]->prev==NULL);
-}
-void delete(int line){
-    assert(header[line]!=NULL);
-    if(header[line]->next!=NULL) header[line]->next->prev=NULL;
-    header[line]=header[line]->next;
-    if(header[line]!=NULL){
-        if(!((intptr_t)header[line]<(intptr_t)heap.end)){
-            printf("line:%p,error:%p\n",line,header[line]);
-            assert(0);
-        }
-    }
-}
-
-void slab_create(int line,void *ptr){
-    int siz=1<<line;
-    int cnt=(4096-5*sizeof(int))/siz;
-    for(int i=0;i<cnt;i++){
-        assert((intptr_t)ptr+i*siz<(intptr_t)heap.end);
-        insert(line,(intptr_t)ptr+i*siz);
-    }
-    *(int*)((intptr_t)ptr+4096-3*sizeof(int))=siz;
-    *(int*)((intptr_t)ptr+4096-4*sizeof(int))=cnt;
-    if(ptr==heap.start){
-        magic=MAGICC;
-    }
-    else *(int*)((intptr_t)ptr-sizeof(int))=MAGICC;
-}
-
-void slab_insert(int line,int val){
-    int siz=1<<line;
-    insert(line,val);
-    int *a=(int*)((intptr_t)val-((intptr_t)val&0xfff)+4096-4*sizeof(int));
-    assert((*a)>=0&&(*a)<=(4096-5*sizeof(int))/siz);
-    (*a)++;
-    assert((*a)>=0&&(*a)<=(4096-5*sizeof(int))/siz);
-    if((*a)==(4096-5*sizeof(int))/siz){
-        for(int i=(val-(val&0xfff));i+siz<=(val-(val&0xfff))+4096-5*sizeof(int);i+=siz){
-            slab_node *cur=(slab_node*)(intptr_t)i;
-            if(cur->prev!=NULL){
-                cur->prev->next=cur->next;
-            }
-            else if(cur->prev==NULL){
-                header[line]=cur->next;
-            }
-            if(cur->next!=NULL) cur->next->prev=cur->prev;
-        }
-        //spinlock_lock(&lk);
-        pgfree((void*)(intptr_t)(val-(val&0xfff)));
-        //spinlock_unlock(&lk);
-    }
-}
-
-//kalloc and kfree
-static void *kalloc(size_t size) {
-    spinlock_lock(&lk);
-    if(find(size)>2048){
-        void *ans=pgalloc(find(size+2*sizeof(int)));
-        spinlock_unlock(&lk);
-        return ans;
-    }
-    else{
-        int siz=find(size);
-        if(siz<sizeof(slab_node)) siz=sizeof(slab_node);
-        assert(siz<4096);
-        int logg=getlog(siz);
-        if(header[logg]==NULL){
-            void *page=pgalloc(4096);
-            if(page==NULL){
-                spinlock_unlock(&lk);
-                return NULL;
-            }
-            slab_create(logg,page);
-            assert((intptr_t)page%siz==0);
-        }
-        void *ans=(void*)(intptr_t)header[logg];
-        assert((intptr_t)ans%siz==0);
-        int *a=(int*)((intptr_t)ans-((intptr_t)ans&0xfff)+4096-4*sizeof(int));
-        assert((*a)>=0&&(*a)<=(4096-5*sizeof(int))/siz);
-        (*a)--;
-        assert((*a)>=0&&(*a)<=(4096-5*sizeof(int))/siz);
-
-        delete(logg);
-        spinlock_unlock(&lk);
-        return ans;
-    }
-    spinlock_unlock(&lk);
-    return NULL;
-}
-
-static void kfree(void *ptr) {
-    spinlock_lock(&lk);
-    if(ptr==heap.start){
-        if(magic==MAGIC){
-            pgfree(ptr);
-            spinlock_unlock(&lk);
-            return;
-        }
-    }
-    else if(*(int*)(ptr-sizeof(int))==MAGIC){
-        pgfree(ptr);
-        spinlock_unlock(&lk);
-        return;
-    }
-    int page=((intptr_t)ptr-((intptr_t)ptr&0xfff));
-    int siz=*(int*)((intptr_t)page+4096-3*sizeof(int));
-    assert(siz!=0);
-    int logg=getlog(siz);
-    slab_insert(logg,(intptr_t)ptr);
-    spinlock_unlock(&lk);
-}*/
 
 static void pmm_init() {
     uintptr_t pmsize = (
