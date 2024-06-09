@@ -1,7 +1,16 @@
 #include<kernel.h>
 
-struct spinlock{
+struct cpu {
+    int noff;
+    int intena;
+};
 
+extern struct cpu cpus[];
+
+struct spinlock{
+    int locked;
+    char *name;
+    struct cpu *cpu;  
 };
 
 struct semaphore{
@@ -14,4 +23,5 @@ struct task{
     void (*entry)(void *);
     Context *context;
     uint8_t *stack;
+    char end[0];
 };
