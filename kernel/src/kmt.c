@@ -1,9 +1,11 @@
 #include <common.h>
+#define STACK_SIZE 8192
 
 static void kmt_init(){
 
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+    task->stack=pmm->alloc(STACK_SIZE);
     return 0;
 }
 static void kmt_teardown(task_t *task){
