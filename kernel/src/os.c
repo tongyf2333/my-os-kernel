@@ -1,16 +1,5 @@
 #include <common.h>
 
-typedef union thread {
-    struct {
-        const char    *name;
-        void          (*entry)(void *);
-        Context       context;
-        union thread  *next;
-        char          end[0];
-    };
-    uint8_t stack[8192];
-} Thread;
-
 static void os_init() {
     pmm->init();
     kmt->init();
