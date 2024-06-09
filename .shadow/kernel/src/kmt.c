@@ -1,30 +1,32 @@
 #include <common.h>
+#define STACK_SIZE 8192
 
-void kmt_init(){
+static void kmt_init(){
 
 }
-int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+    task->stack=pmm->alloc(STACK_SIZE);
     return 0;
 }
-void kmt_teardown(task_t *task){
+static void kmt_teardown(task_t *task){
 
 }
-void kmt_spin_init(spinlock_t *lk, const char *name){
+static void kmt_spin_init(spinlock_t *lk, const char *name){
 
 }
-void kmt_spin_lock(spinlock_t *lk){
+static void kmt_spin_lock(spinlock_t *lk){
 
 }
-void kmt_spin_unlock(spinlock_t *lk){
+static void kmt_spin_unlock(spinlock_t *lk){
 
 }
-void kmt_sem_init(sem_t *sem, const char *name, int value){
+static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
-void kmt_sem_wait(sem_t *sem){
+static void kmt_sem_wait(sem_t *sem){
 
 }
-void kmt_sem_signal(sem_t *sem){
+static void kmt_sem_signal(sem_t *sem){
 
 }
 
