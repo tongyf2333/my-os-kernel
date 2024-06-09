@@ -14,7 +14,8 @@ struct spinlock{
 };
 
 struct semaphore{
-
+    int count;
+    struct spinlock *lk;
 };
 
 struct task{
