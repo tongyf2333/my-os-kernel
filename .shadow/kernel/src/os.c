@@ -45,9 +45,8 @@ void merge(int l,int r){
 static Context *os_trap(Event ev, Context *ctx){
     merge(1,cnt);
     Context *next = NULL;
-    printf("cnt:%d\n",cnt);
+    printf("event:%d\n",ev.event);
     for (int i=1;i<=cnt;i++) {
-        printf("QQQ\n");
         hand h=table[i];
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
