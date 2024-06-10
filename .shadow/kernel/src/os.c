@@ -3,6 +3,7 @@
 static void os_init() {
     pmm->init();
     kmt->init();
+    printf("QWQ\n");
     dev->init();
     printf("QAQ\n");
 }
