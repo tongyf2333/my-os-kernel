@@ -3,7 +3,7 @@
 #define LOCKED 1
 #define UNLOCKED 0
 
-task_t *head;
+task_t *first;
 
 struct cpu cpus[16];
 
@@ -18,8 +18,8 @@ bool holding(spinlock_t *lk) {
     );
 }
 void push_off(void) {
-    int old = intr_get();
-    intr_off();
+    int old = ienabled();
+    iset(false);
     if(mycpu()->noff == 0)
         mycpu()->intena = old;
     mycpu()->noff += 1;
@@ -27,26 +27,26 @@ void push_off(void) {
 
 void pop_off(void) {
     struct cpu *c = mycpu();
-    if(intr_get())
+    if(ienabled())
         panic("pop_off - interruptible");
     if(c->noff < 1)
         panic("pop_off");
     c->noff -= 1;
     if(c->noff == 0 && c->intena)
-        intr_on();
+        iset(true);
 }
 
 
 static void kmt_init(){
-    head=NULL;
+    first=NULL;
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     task->stack=pmm->alloc(STACK_SIZE);
     task->entry=entry;
     task->name=name;
     task->context=kcontext((Area){.start=&task->end,.end=task+1,},task->entry,arg);
-    task->next=head;
-    head=task;
+    task->next=first;
+    first=task;
     return 0;
 }
 static void kmt_teardown(task_t *task){
@@ -64,7 +64,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
-    lk->cpu=cpu_current();
+    lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)) {

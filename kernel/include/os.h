@@ -9,7 +9,7 @@ extern struct cpu cpus[];
 
 struct spinlock{
     int locked;
-    char *name;
+    const char *name;
     struct cpu *cpu;  
 };
 

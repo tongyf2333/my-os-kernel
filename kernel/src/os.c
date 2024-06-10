@@ -3,6 +3,7 @@
 static void os_init() {
     pmm->init();
     kmt->init();
+    dev->init();
 }
 
 static void os_run() {
@@ -49,7 +50,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r) next = r;
         }
     }
-    //panic_on(!next, "return to NULL context");
+    panic_on(!next, "return to NULL context");
     //panic_on(sane_context(next), "return to invalid context");
     return next;
 }
