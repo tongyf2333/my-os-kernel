@@ -47,7 +47,7 @@ void merge(int l,int r){
 static Context *os_trap(Event ev, Context *ctx){
     if(ev.event==EVENT_YIELD){
         if (!current_task) current_task = tasks[0];
-        else          current_task->context = ctx;
+        else current_task->context = ctx;
         /*do {
             current = current->next;
         } while (

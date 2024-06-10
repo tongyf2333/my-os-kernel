@@ -20,6 +20,7 @@ static device_t *dev_lookup(const char *name) {
 }
 
 static device_t *dev_create(int size, const char* name, int id, devops_t *ops) {
+  printf("QQAQ\n");
   device_t *dev = pmm->alloc(sizeof(device_t));
   *dev = (device_t) {
     .name = name,
