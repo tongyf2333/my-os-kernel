@@ -252,7 +252,9 @@ static int tty_read(device_t *dev, int offset, void *buf, int count) {
 
 static int tty_write(device_t *dev, int offset, const void *buf, int count) {
   tty_t *tty = dev->ptr;
+  printf("inside tty_write\n");
   kmt->sem_wait(&tty->lock);
+  printf("write_1\n");
   for (int i = 0; i < count; i++) {
     tty_putc(tty, ((const char *)buf)[i]);
   }
