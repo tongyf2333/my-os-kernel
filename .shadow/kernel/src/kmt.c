@@ -3,9 +3,10 @@
 #define LOCKED 1
 #define UNLOCKED 0
 
-task_t *first;
-
 struct cpu cpus[16];
+
+struct task *tasks[128],*current_task;
+int task_count=0;
 
 static struct cpu *mycpu(){
     return &cpus[cpu_current()];
@@ -38,15 +39,15 @@ void pop_off(void) {
 
 
 static void kmt_init(){
-    first=NULL;
+    current_task=NULL;
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     task->stack=pmm->alloc(STACK_SIZE);
     task->entry=entry;
     task->name=name;
     task->context=kcontext((Area){.start=&task->end,.end=task+1,},task->entry,arg);
-    task->next=first;
-    first=task;
+    tasks[task_count++]=task;
+    if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
     return 0;
 }
 static void kmt_teardown(task_t *task){
