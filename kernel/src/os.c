@@ -3,7 +3,9 @@
 static void os_init() {
     pmm->init();
     kmt->init();
+    printf("QWQ\n");
     dev->init();
+    printf("QAQ\n");
 }
 
 static void os_run() {
@@ -41,6 +43,7 @@ void merge(int l,int r){
 }
 
 static Context *os_trap(Event ev, Context *ctx){
+    merge(1,cnt);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -59,7 +62,6 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
-    merge(1,cnt);
 }
 
 MODULE_DEF(os) = {
