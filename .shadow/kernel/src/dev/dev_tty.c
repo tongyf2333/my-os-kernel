@@ -220,8 +220,10 @@ static int tty_init(device_t *ttydev) {
   struct tty_queue *q = &tty->queue;
   q->front = q->rear = q->buf = pmm->alloc(TTY_COOK_BUF_SZ);
   q->end = q->buf + TTY_COOK_BUF_SZ;
+  printf("inside tty3\n");
   kmt->sem_init(&tty->lock, "tty lock", 1);
   kmt->sem_init(&tty->cooked, "tty cooked lines", 0);
+  printf("inside tty4\n");
   welcome(ttydev);
   printf("outside tty\n");
   return 0;
