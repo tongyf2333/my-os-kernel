@@ -221,6 +221,7 @@ static int tty_init(device_t *ttydev) {
   kmt->sem_init(&tty->lock, "tty lock", 1);
   kmt->sem_init(&tty->cooked, "tty cooked lines", 0);
   welcome(ttydev);
+  printf("outside tty\n");
   return 0;
 }
 
