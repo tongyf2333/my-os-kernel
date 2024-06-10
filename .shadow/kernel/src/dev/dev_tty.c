@@ -198,6 +198,7 @@ static void welcome(device_t *dev) {
 }
 
 static int tty_init(device_t *ttydev) {
+  printf("inside tty\n");
   tty_t *tty = ttydev->ptr;
   tty->fbdev = dev->lookup("fb");
   fb_t *fb = tty->fbdev->ptr;
