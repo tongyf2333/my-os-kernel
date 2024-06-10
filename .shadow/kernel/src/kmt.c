@@ -82,9 +82,9 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 static void kmt_sem_wait(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count--;
-    while(sem->count<=0){
+    /*while(sem->count<=0){
         yield();
-    }
+    }*/
     kmt_spin_unlock(sem->lk);
 }
 static void kmt_sem_signal(sem_t *sem){
