@@ -210,6 +210,7 @@ static int tty_init(device_t *ttydev) {
   tty->dirty = pmm->alloc(tty->size * sizeof(tty->dirty[0]));
   tty->end = tty->buf + tty->size;
   tty->sp_buf = pmm->alloc(tty->size * 2 * sizeof(struct sprite));
+  printf("inside tty1\n");
   for (int i = 0; i < tty->size; i++) {
     tty->buf[i] = tty_defaultch();
   }
