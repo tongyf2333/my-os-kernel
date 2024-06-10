@@ -214,6 +214,7 @@ static int tty_init(device_t *ttydev) {
   for (int i = 0; i < tty->size; i++) {
     tty->buf[i] = tty_defaultch();
   }
+  printf("inside tty2\n");
   memset(tty->dirty, 0, tty->size * sizeof(tty->dirty[0]));
   tty->cursor = tty->buf;
   struct tty_queue *q = &tty->queue;
