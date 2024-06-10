@@ -1,11 +1,21 @@
 #include<kernel.h>
 
-struct spinlock{
+struct cpu {
+    int noff;
+    int intena;
+};
 
+extern struct cpu cpus[];
+
+struct spinlock{
+    int locked;
+    const char *name;
+    struct cpu *cpu;  
 };
 
 struct semaphore{
-
+    int count;
+    struct spinlock *lk;
 };
 
 struct task{
@@ -14,4 +24,5 @@ struct task{
     void (*entry)(void *);
     Context *context;
     uint8_t *stack;
+    char end[0];
 };
