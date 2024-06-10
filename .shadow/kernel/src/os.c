@@ -47,6 +47,7 @@ static Context *os_trap(Event ev, Context *ctx){
     Context *next = NULL;
     printf("cnt:%d\n",cnt);
     for (int i=1;i<=cnt;i++) {
+        printf("QQQ\n");
         hand h=table[i];
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
