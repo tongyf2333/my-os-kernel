@@ -4,6 +4,7 @@ static void os_init() {
     pmm->init();
     kmt->init();
     dev->init();
+    printf("QAQ\n");
 }
 
 static void os_run() {
