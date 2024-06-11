@@ -5,9 +5,7 @@ extern task_t *tasks[],*current_task;
 static void os_init() {
     pmm->init();
     kmt->init();
-    printf("QWQ\n");
     dev->init();
-    printf("QAQ\n");
 }
 
 static void os_run() {
