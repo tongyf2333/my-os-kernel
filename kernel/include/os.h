@@ -3,6 +3,7 @@
 #define RUNNING 1
 #define RUNNABLE 0
 #define QUESIZ 256
+#define STACK_SIZE 8192
 
 struct cpu {
     int noff;
@@ -34,7 +35,6 @@ struct task{
     struct task *next;
     void (*entry)(void *);
     Context *context;
-    uint8_t *stack;
-    char end[0];
+    uint8_t stack[STACK_SIZE];
 };
 

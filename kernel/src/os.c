@@ -1,4 +1,15 @@
 #include <common.h>
+sem_t empty, fill;
+#define P kmt->sem_wait
+#define V kmt->sem_signal
+#define N 5
+#define NPROD 4
+#define NCONS 5
+void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
+static inline task_t *task_alloc() {
+  return pmm->alloc(sizeof(task_t));
+}
 
 extern task_t *tasks[],*current_task;
 
@@ -6,9 +17,24 @@ static void os_init() {
     pmm->init();
     kmt->init();
     dev->init();
+    printf("init finished\n");
+    //kmt->create(task_alloc(),"_",NULL,NULL);
+    kmt->sem_init(&empty, "empty", N);
+    kmt->sem_init(&fill,  "fill",  0);
+    for (int i = 0; i < NPROD; i++) {
+        kmt->create(task_alloc(), "producer", Tproduce, NULL);
+    }
+    for (int i = 0; i < NCONS; i++) {
+        kmt->create(task_alloc(), "consumer", Tconsume, NULL);
+    }
 }
 
 static void os_run() {
+    //printf("os_run\n");
+    //iset(true);
+    //printf("iset true\n");
+    yield();
+    //printf("over\n");
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
@@ -57,19 +83,17 @@ static Context *os_trap(Event ev, Context *ctx){
         return current_task->context;
     }
     else{
-        merge(1,cnt);
+        //if (!current_task) current_task = tasks[0];
+        //else current_task->context = ctx;
         Context *next = NULL;
-        printf("event:%d\n",ev.event);
         for (int i=1;i<=cnt;i++) {
             hand h=table[i];
             if (h.event == EVENT_NULL || h.event == ev.event) {
                 Context *r = h.handler(ev, ctx);
-                //panic_on(r && next, "return to multiple contexts");
                 if (r) next = r;
             }
         }
         panic_on(!next, "return to NULL context");
-        //panic_on(sane_context(next), "return to invalid context");
         return next;
     }
 }
@@ -78,6 +102,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
+    merge(1,cnt);
 }
 
 MODULE_DEF(os) = {
