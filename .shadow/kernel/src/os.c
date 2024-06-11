@@ -32,8 +32,6 @@ static void os_run() {
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    iset(true);
-    yield();
     while (1) ;
 }
 
@@ -79,6 +77,7 @@ static Context *os_trap(Event ev, Context *ctx){
         return current_task->context;
     }
     else{
+        current_task->context=ctx;
         merge(1,cnt);
         Context *next = NULL;
         printf("event:%d\n",ev.event);
