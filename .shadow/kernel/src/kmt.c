@@ -10,12 +10,13 @@ int task_count=0;
 
 
 static void enqueue(queue_t *q,task_t *elem){
-    if(q->tl==QUESIZ) q->tl=0;
-    q->element[++(q->tl)]=elem;
+    q->element[((q->tl)+1)%QUESIZ]=elem;
 }
 
 static task_t *dequeue(queue_t *q){
-    return q->element[(q->hd)++];
+    task_t *res=q->element[q->hd];
+    q->hd=((q->hd)+1)%QUESIZ;
+    return res;
 }
 
 static struct cpu *mycpu(){
@@ -90,8 +91,8 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     kmt_spin_init(sem->lk,name);
     sem->count=value;
     sem->que=pmm->alloc(sizeof(queue_t));
-    sem->que->hd=1;
-    sem->que->tl=0;
+    sem->que->hd=0;
+    sem->que->tl=-1;
 
 }
 static void kmt_sem_wait(sem_t *sem){
