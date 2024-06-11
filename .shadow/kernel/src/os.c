@@ -31,9 +31,9 @@ static void os_init() {
 
 static void os_run() {
     //printf("os_run\n");
-    iset(true);
+    //iset(true);
     //printf("iset true\n");
-    yield();
+    //yield();
     //printf("over\n");
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
@@ -87,18 +87,16 @@ static Context *os_trap(Event ev, Context *ctx){
     else{
         current_task->context=ctx;
         Context *next = NULL;
-        printf("event:%d\n",ev.event*ev.event);
+        printf("event:%d\n",ev.event);
         for (int i=1;i<=cnt;i++) {
             hand h=table[i];
             if (h.event == EVENT_NULL || h.event == ev.event) {
                 printf("QQQ\n");
                 Context *r = h.handler(ev, ctx);
-                //panic_on(r && next, "return to multiple contexts");
                 if (r) next = r;
             }
         }
         panic_on(!next, "return to NULL context");
-        //panic_on(sane_context(next), "return to invalid context");
         return next;
     }
 }
