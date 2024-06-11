@@ -69,7 +69,6 @@ void merge(int l,int r){
 }
 
 static Context *os_trap(Event ev, Context *ctx){
-    assert(ctx!=NULL);
     if(ev.event==EVENT_YIELD){
         if (!current_task) current_task = tasks[0];
         else current_task->context = ctx;
@@ -84,8 +83,8 @@ static Context *os_trap(Event ev, Context *ctx){
         return current_task->context;
     }
     else{
-        if (!current_task) current_task = tasks[0];
-        else current_task->context = ctx;
+        //if (!current_task) current_task = tasks[0];
+        //else current_task->context = ctx;
         Context *next = NULL;
         for (int i=1;i<=cnt;i++) {
             hand h=table[i];
