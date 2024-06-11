@@ -8,6 +8,8 @@ struct cpu cpus[16];
 struct task *tasks[128],*current_task;
 int task_count=0;
 
+spinlock_t lock;
+
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
@@ -51,13 +53,17 @@ void pop_off(void) {
 
 static void kmt_init(){
     current_task=NULL;
+    kmt_spin_init(&lock,"null");
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
     task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
-    tasks[task_count++]=task;
+    kmt_spin_lock(&lock);
+    tasks[task_count]=task;
+    task_count++;
+    kmt_spin_unlock(&lock);
     if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
     return 0;
 }
