@@ -18,6 +18,13 @@ static void os_init() {
     kmt->init();
     dev->init();
     printf("init finished\n");
+    
+}
+
+static void os_run() {
+    for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
+        putch(*s == '*' ? '0' + cpu_current() : *s);
+    }
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
@@ -25,12 +32,6 @@ static void os_init() {
     }
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
-    }
-}
-
-static void os_run() {
-    for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
-        putch(*s == '*' ? '0' + cpu_current() : *s);
     }
     while (1) ;
 }
