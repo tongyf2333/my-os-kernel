@@ -8,9 +8,9 @@ struct cpu cpus[16];
 struct task *tasks[128],*current_task;
 int task_count=0;
 
-
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
+    q->tl=((q->tl)+1)%QUESIZ;
 }
 
 static task_t *dequeue(queue_t *q){
