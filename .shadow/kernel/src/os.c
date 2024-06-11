@@ -31,7 +31,7 @@ static void os_init() {
 
 static void os_run() {
     printf("os_run\n");
-    //if(ienabled()!=true) iset(true);
+    iset(true);
     printf("iset true\n");
     yield();
     printf("over\n");
