@@ -8,6 +8,16 @@ struct cpu cpus[16];
 struct task *tasks[128],*current_task;
 int task_count=0;
 
+
+static void enqueue(queue_t *q,task_t *elem){
+    if(q->tl==QUESIZ) q->tl=0;
+    q->element[++(q->tl)]=elem;
+}
+
+static task_t *dequeue(queue_t *q){
+    return q->element[(q->hd)++];
+}
+
 static struct cpu *mycpu(){
     return &cpus[cpu_current()];
 }
@@ -45,6 +55,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->stack=pmm->alloc(STACK_SIZE);
     task->entry=entry;
     task->name=name;
+    task->status=RUNNING;
     task->context=kcontext((Area){.start=&task->end,.end=task+1,},task->entry,arg);
     tasks[task_count++]=task;
     if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
@@ -78,18 +89,34 @@ static void kmt_spin_unlock(spinlock_t *lk){
 static void kmt_sem_init(sem_t *sem, const char *name, int value){
     kmt_spin_init(sem->lk,name);
     sem->count=value;
+    sem->que=pmm->alloc(sizeof(queue_t));
+    sem->que->hd=1;
+    sem->que->tl=0;
+
 }
 static void kmt_sem_wait(sem_t *sem){
+    int acquired = 0;
     kmt_spin_lock(sem->lk);
-    sem->count--;
-    /*while(sem->count<=0){
-        yield();
-    }*/
+    if (sem->count <= 0) {
+        enqueue(sem->que, current_task);
+        current_task->status = BLOCKED;
+    }
+    else{
+        sem->count--;
+        acquired = 1;
+    }
     kmt_spin_unlock(sem->lk);
+    if (!acquired) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
-    sem->count++;
+    if((sem->que->hd)<=(sem->que->tl)) {
+        task_t *task = dequeue(sem->que);
+        task->status = RUNNABLE;
+    } 
+    else{
+        sem->count++;
+    }
     kmt_spin_unlock(sem->lk);
 }
 

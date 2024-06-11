@@ -48,12 +48,14 @@ static Context *os_trap(Event ev, Context *ctx){
     if(ev.event==EVENT_YIELD){
         if (!current_task) current_task = tasks[0];
         else current_task->context = ctx;
-        /*do {
-            current = current->next;
+        do {
+            current_task = current_task->next;
         } while (
-            (current - tasks) % cpu_count() != cpu_current()
-        );*/
+            (current_task - tasks[0]) % cpu_count() != cpu_current()||
+            current_task->status != RUNNING
+        );
         current_task=current_task->next;
+        current_task->status=RUNNING;
         return current_task->context;
     }
     else{
