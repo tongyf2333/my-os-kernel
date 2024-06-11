@@ -95,7 +95,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
 static void kmt_sem_wait(sem_t *sem){
-    int acquired = 0;
+    /*int acquired = 0;
     kmt_spin_lock(sem->lk);
     if (sem->count <= 0) {
         enqueue(sem->que, current_task);
@@ -106,16 +106,22 @@ static void kmt_sem_wait(sem_t *sem){
         acquired = 1;
     }
     kmt_spin_unlock(sem->lk);
-    if (!acquired) yield();
+    if (!acquired) yield();*/
+    kmt_spin_lock(sem->lk);
+    sem->count--;
+    if (sem->count <= 0) {
+        enqueue(sem->que, current_task);
+        current_task->status = BLOCKED;
+        yield();
+    }
+    kmt_spin_unlock(sem->lk);
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
+    sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNABLE;
-    } 
-    else{
-        sem->count++;
     }
     kmt_spin_unlock(sem->lk);
 }
