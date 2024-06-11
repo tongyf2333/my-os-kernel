@@ -83,9 +83,7 @@ static void os_init() {
     kmt->init();
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    dev->init();
-    printf("init finished\n");
-    //kmt->create(task_alloc(),"_",NULL,NULL);
+    //dev->init();
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
@@ -97,11 +95,8 @@ static void os_init() {
 }
 
 static void os_run() {
-    //printf("os_run\n");
-    //iset(true);
-    //printf("iset true\n");
+    iset(true);
     yield();
-    //printf("over\n");
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
