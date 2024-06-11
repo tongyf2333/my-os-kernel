@@ -68,7 +68,8 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     return 0;
 }
 static void kmt_teardown(task_t *task){
-    pmm->free(task);
+    pmm->free(task->context);
+    task->status=DEAD;
 }
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;

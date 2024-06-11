@@ -2,6 +2,7 @@
 #define BLOCKED 2
 #define RUNNING 1
 #define RUNNABLE 0
+#define DEAD 3
 #define QUESIZ 256
 #define STACK_SIZE 8192
 
