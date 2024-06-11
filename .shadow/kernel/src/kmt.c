@@ -55,7 +55,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
-    task->context=kcontext((Area){.start=&task->stack,.end=task+1,},task->entry,arg);
+    task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
     tasks[task_count++]=task;
     if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
     return 0;
