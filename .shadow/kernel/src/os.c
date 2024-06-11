@@ -71,7 +71,6 @@ void merge(int l,int r){
 static Context *os_trap(Event ev, Context *ctx){
     assert(ctx!=NULL);
     if(ev.event==EVENT_YIELD){
-        printf("QAQ\n");
         if (!current_task) current_task = tasks[0];
         else current_task->context = ctx;
         do {
@@ -85,13 +84,12 @@ static Context *os_trap(Event ev, Context *ctx){
         return current_task->context;
     }
     else{
-        current_task->context=ctx;
+        if (!current_task) current_task = tasks[0];
+        else current_task->context = ctx;
         Context *next = NULL;
-        printf("event:%d\n",ev.event);
         for (int i=1;i<=cnt;i++) {
             hand h=table[i];
             if (h.event == EVENT_NULL || h.event == ev.event) {
-                printf("QQQ\n");
                 Context *r = h.handler(ev, ctx);
                 assert(r!=NULL);
                 if (r) next = r;
@@ -103,7 +101,6 @@ static Context *os_trap(Event ev, Context *ctx){
 }
 
 static void os_on_irq(int seq, int event, handler_t handler){
-    printf("inside on_irq\n");
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
