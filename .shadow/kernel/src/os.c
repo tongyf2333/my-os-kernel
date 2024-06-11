@@ -1,4 +1,15 @@
 #include <common.h>
+sem_t empty, fill;
+#define P kmt->sem_wait
+#define V kmt->sem_signal
+#define N 5
+#define NPROD 2
+#define NCONS 2
+void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
+static inline task_t *task_alloc() {
+  return pmm->alloc(sizeof(task_t));
+}
 
 extern task_t *tasks[],*current_task;
 
@@ -6,6 +17,16 @@ static void os_init() {
     pmm->init();
     kmt->init();
     dev->init();
+    //#ifdef DEBUG_LOCAL
+        kmt->sem_init(&empty, "empty", N);
+        kmt->sem_init(&fill,  "fill",  0);
+        for (int i = 0; i < NPROD; i++) {
+            kmt->create(task_alloc(), "producer", Tproduce, NULL);
+        }
+        for (int i = 0; i < NCONS; i++) {
+            kmt->create(task_alloc(), "consumer", Tconsume, NULL);
+        }
+    //#endif
 }
 
 static void os_run() {
