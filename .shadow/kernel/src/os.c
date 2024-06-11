@@ -16,7 +16,7 @@ extern task_t *tasks[],*current_task;
 static void os_init() {
     pmm->init();
     kmt->init();
-    dev->init();
+    //dev->init();
     printf("init finished\n");
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -78,7 +78,6 @@ static Context *os_trap(Event ev, Context *ctx){
     }
     else{
         current_task->context=ctx;
-        merge(1,cnt);
         Context *next = NULL;
         printf("event:%d\n",ev.event);
         for (int i=1;i<=cnt;i++) {
@@ -99,6 +98,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
+    merge(1,cnt);
 }
 
 MODULE_DEF(os) = {
