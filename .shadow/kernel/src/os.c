@@ -16,7 +16,7 @@ extern task_t *tasks[],*current_task;
 static void os_init() {
     pmm->init();
     kmt->init();
-    dev->init();
+    //dev->init();
     printf("init finished\n");
     kmt->create(task_alloc(),"_",NULL,NULL);
     kmt->sem_init(&empty, "empty", N);
