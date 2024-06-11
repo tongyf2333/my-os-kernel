@@ -90,6 +90,7 @@ static Context *os_trap(Event ev, Context *ctx){
         for (int i=1;i<=cnt;i++) {
             hand h=table[i];
             if (h.event == EVENT_NULL || h.event == ev.event) {
+                printf("QQQ\n");
                 Context *r = h.handler(ev, ctx);
                 //panic_on(r && next, "return to multiple contexts");
                 if (r) next = r;
