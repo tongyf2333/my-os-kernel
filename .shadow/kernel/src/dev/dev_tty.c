@@ -198,7 +198,6 @@ static void welcome(device_t *dev) {
 }
 
 static int tty_init(device_t *ttydev) {
-  printf("inside tty\n");
   tty_t *tty = ttydev->ptr;
   tty->fbdev = dev->lookup("fb");
   fb_t *fb = tty->fbdev->ptr;
@@ -210,22 +209,17 @@ static int tty_init(device_t *ttydev) {
   tty->dirty = pmm->alloc(tty->size * sizeof(tty->dirty[0]));
   tty->end = tty->buf + tty->size;
   tty->sp_buf = pmm->alloc(tty->size * 2 * sizeof(struct sprite));
-  printf("inside tty1\n");
   for (int i = 0; i < tty->size; i++) {
     tty->buf[i] = tty_defaultch();
   }
-  printf("inside tty2\n");
   memset(tty->dirty, 0, tty->size * sizeof(tty->dirty[0]));
   tty->cursor = tty->buf;
   struct tty_queue *q = &tty->queue;
   q->front = q->rear = q->buf = pmm->alloc(TTY_COOK_BUF_SZ);
   q->end = q->buf + TTY_COOK_BUF_SZ;
-  printf("inside tty3\n");
   kmt->sem_init(&tty->lock, "tty lock", 1);
   kmt->sem_init(&tty->cooked, "tty cooked lines", 0);
-  printf("inside tty4\n");
   welcome(ttydev);
-  printf("outside tty\n");
   return 0;
 }
 
@@ -252,9 +246,7 @@ static int tty_read(device_t *dev, int offset, void *buf, int count) {
 
 static int tty_write(device_t *dev, int offset, const void *buf, int count) {
   tty_t *tty = dev->ptr;
-  printf("inside tty_write\n");
   kmt->sem_wait(&tty->lock);
-  printf("write_1\n");
   for (int i = 0; i < count; i++) {
     tty_putc(tty, ((const char *)buf)[i]);
   }
