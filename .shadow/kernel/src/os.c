@@ -31,9 +31,9 @@ static void os_init() {
 
 static void os_run() {
     //printf("os_run\n");
-    iset(true);
+    //iset(true);
     //printf("iset true\n");
-    //yield();
+    yield();
     //printf("over\n");
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
