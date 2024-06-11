@@ -52,17 +52,16 @@ static void kmt_init(){
     current_task=NULL;
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
-    /*task->stack=pmm->alloc(STACK_SIZE);
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
-    task->context=kcontext((Area){.start=&task->end,.end=task+1,},task->entry,arg);
+    task->context=kcontext((Area){.start=&task->stack,.end=task+1,},task->entry,arg);
     tasks[task_count++]=task;
-    if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];*/
+    if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
     return 0;
 }
 static void kmt_teardown(task_t *task){
-    pmm->free(task->stack);
+    
 }
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
