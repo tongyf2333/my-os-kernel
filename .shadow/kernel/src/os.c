@@ -31,7 +31,7 @@ static void os_init() {
 
 static void os_run() {
     //printf("os_run\n");
-    //iset(true);
+    iset(true);
     //printf("iset true\n");
     yield();
     //printf("over\n");
@@ -86,7 +86,7 @@ static Context *os_trap(Event ev, Context *ctx){
     else{
         current_task->context=ctx;
         Context *next = NULL;
-        printf("event:%d\n",ev.event);
+        printf("event:%d\n",ev.event*ev.event);
         for (int i=1;i<=cnt;i++) {
             hand h=table[i];
             if (h.event == EVENT_NULL || h.event == ev.event) {
