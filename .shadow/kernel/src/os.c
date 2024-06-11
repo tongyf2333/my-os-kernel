@@ -98,6 +98,7 @@ static Context *os_trap(Event ev, Context *ctx){
 }
 
 static void os_on_irq(int seq, int event, handler_t handler){
+    printf("inside on_irq\n");
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
