@@ -18,7 +18,7 @@ static void os_init() {
     kmt->init();
     dev->init();
     printf("init finished\n");
-    kmt->create(task_alloc(),"_",NULL,NULL);
+    //kmt->create(task_alloc(),"_",NULL,NULL);
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
@@ -91,7 +91,6 @@ static Context *os_trap(Event ev, Context *ctx){
             hand h=table[i];
             if (h.event == EVENT_NULL || h.event == ev.event) {
                 Context *r = h.handler(ev, ctx);
-                assert(r!=NULL);
                 if (r) next = r;
             }
         }
