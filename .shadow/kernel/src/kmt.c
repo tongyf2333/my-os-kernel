@@ -58,6 +58,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
     tasks[task_count++]=task;
     if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
+    yield();
     return 0;
 }
 static void kmt_teardown(task_t *task){
