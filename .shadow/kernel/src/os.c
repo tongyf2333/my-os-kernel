@@ -93,6 +93,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (h.event == EVENT_NULL || h.event == ev.event) {
                 printf("QQQ\n");
                 Context *r = h.handler(ev, ctx);
+                assert(r!=NULL);
                 if (r) next = r;
             }
         }
