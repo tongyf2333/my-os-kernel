@@ -64,6 +64,7 @@ static void kmt_teardown(task_t *task){
     pmm->free(task);
 }
 static void kmt_spin_init(spinlock_t *lk, const char *name){
+    lk=pmm->alloc(sizeof(spinlock_t));
     lk->name=name;
     lk->locked=0;
     lk->cpu=0;
