@@ -86,7 +86,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
 static void kmt_sem_wait(sem_t *sem){
-    //printf("P:%s\n",sem->lk->name);
+    printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     while(sem->count<=0){
         enqueue(sem->que,current_task);
@@ -99,7 +99,7 @@ static void kmt_sem_wait(sem_t *sem){
     kmt_spin_unlock(sem->lk);
 }
 static void kmt_sem_signal(sem_t *sem){
-    //printf("V:%s\n",sem->lk->name);
+    printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
