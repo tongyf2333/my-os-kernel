@@ -92,10 +92,8 @@ static void kmt_sem_wait(sem_t *sem){
     kmt_spin_lock(sem->lk);
     //int flag=0;
     while(sem->count<=0){
-        if(current_task->status==RUNNING){
-            enqueue(sem->que,current_task);
-            current_task->status=BLOCKED;
-        }
+        enqueue(sem->que,current_task);
+        current_task->status=BLOCKED;
         //flag=1;
         kmt_spin_unlock(sem->lk);
         yield();
