@@ -1,5 +1,4 @@
 #include <common.h>
-#define STACK_SIZE 8192
 #define LOCKED 1
 #define UNLOCKED 0
 
