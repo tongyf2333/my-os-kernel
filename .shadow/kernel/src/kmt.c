@@ -57,7 +57,7 @@ static void kmt_teardown(task_t *task){
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
     lk->locked=0;
-    lk->cpu=mycpu();
+    lk->cpu=NULL;
 }
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
@@ -89,7 +89,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 }
 static void kmt_sem_wait(sem_t *sem){
     //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
-    //kmt_spin_lock(sem->lk);
+    kmt_spin_lock(sem->lk);
     int flag=0;
     if(sem->count<=0){
         enqueue(sem->que,current_task);
@@ -97,18 +97,18 @@ static void kmt_sem_wait(sem_t *sem){
         flag=1;
     }
     sem->count--;
-    //kmt_spin_unlock(sem->lk);
+    kmt_spin_unlock(sem->lk);
     if(flag==1) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
     //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
-    //kmt_spin_lock(sem->lk);
+    kmt_spin_lock(sem->lk);
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
-    //kmt_spin_unlock(sem->lk);
+    kmt_spin_unlock(sem->lk);
 }
 
 static void kmt_init(){
