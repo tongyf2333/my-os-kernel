@@ -86,20 +86,20 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
 static void kmt_sem_wait(sem_t *sem){
-    printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
-    while(sem->count<=0){
+    int flag=0;
+    if(sem->count<=0){
         enqueue(sem->que,current_task);
         current_task->status=BLOCKED;
-        kmt_spin_unlock(sem->lk);
-        yield();
-        kmt_spin_lock(sem->lk);
+        flag=1;
     }
     sem->count--;
     kmt_spin_unlock(sem->lk);
+    if(flag==1) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
-    printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
@@ -116,6 +116,7 @@ static void kmt_init(){
 
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     task->entry=entry;
+    task->cpu_id=cpu_current();
     task->name=name;
     task->status=RUNNING;
     task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);

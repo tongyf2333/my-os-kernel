@@ -5,8 +5,8 @@ sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
-#define NPROD 4
-#define NCONS 5
+#define NPROD 1
+#define NCONS 1
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 static inline task_t *task_alloc() {
@@ -51,7 +51,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     do {
         current_task = current_task->next;
     } while (
-        (current_task - tasks[0]) % cpu_count() != cpu_current() ||
+        current_task->cpu_id != cpu_current() ||
         current_task->status != RUNNING 
     );
     current_task=current_task->next;
@@ -83,6 +83,12 @@ static void os_init() {
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     //dev->init();
+}
+
+static void os_run() {
+    for (const char *s = "inside CPU #*\n"; *s; s++) {
+        putch(*s == '*' ? '0' + cpu_current() : *s);
+    }
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
@@ -91,9 +97,6 @@ static void os_init() {
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}
-
-static void os_run() {
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
