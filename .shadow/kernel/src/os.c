@@ -111,6 +111,7 @@ static void os_run() {
     }
     kmt->sem_init(&empty, "empty", N);
     easy_test();
+    printf("easy test passed\n");
     hard_test();
     iset(true);
     yield();
