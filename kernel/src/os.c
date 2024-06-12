@@ -84,10 +84,12 @@ static void os_init() {
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     //dev->init();
+    kmt->spin_init(&lk,"easy");
+    kmt->sem_init(&empty, "empty", N);
+    kmt->sem_init(&fill,  "fill",  0);
 }
 
 static void easy_test(){
-    kmt->spin_init(&lk,"easy");
     for(int i=1;i<=100000;i++){
         kmt->spin_lock(&lk);
         sum++;
@@ -96,8 +98,6 @@ static void easy_test(){
 }
 
 static void hard_test(){
-    kmt->sem_init(&empty, "empty", N);
-    kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
     }

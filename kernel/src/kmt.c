@@ -66,12 +66,14 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
+    __sync_synchronize();
     lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)) {
         panic("double release");
     }
+    __sync_synchronize();
     lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
@@ -86,7 +88,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
 static void kmt_sem_wait(sem_t *sem){
-    //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     int flag=0;
     if(sem->count<=0){
@@ -99,7 +101,7 @@ static void kmt_sem_wait(sem_t *sem){
     if(flag==1) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
-    //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
