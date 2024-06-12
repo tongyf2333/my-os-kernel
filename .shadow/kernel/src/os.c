@@ -83,6 +83,10 @@ static void os_init() {
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     //dev->init();
+    
+}
+
+static void os_run() {
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
@@ -91,9 +95,6 @@ static void os_init() {
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}
-
-static void os_run() {
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
