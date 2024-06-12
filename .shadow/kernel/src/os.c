@@ -97,6 +97,7 @@ static void os_run() {
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
+    printf("QAQ\n");
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
