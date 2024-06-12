@@ -8,7 +8,7 @@ struct task *tasks[128],*current_task;
 int task_count=0;
 
 spinlock_t lock;
-/*
+
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
@@ -18,7 +18,7 @@ static task_t *dequeue(queue_t *q){
     task_t *res=q->element[q->hd];
     q->hd=((q->hd)+1)%QUESIZ;
     return res;
-}*/
+}
 
 static struct cpu *mycpu(){
     return &cpus[cpu_current()];
@@ -66,6 +66,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
+    __sync_synchronize();
     lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
@@ -73,6 +74,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
         panic("double release");
     }
     lk->cpu = NULL;
+    __sync_synchronize();
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
 }
@@ -86,7 +88,8 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
 static void kmt_sem_wait(sem_t *sem){
-    /*kmt_spin_lock(sem->lk);
+    //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    kmt_spin_lock(sem->lk);
     int flag=0;
     if(sem->count<=0){
         enqueue(sem->que,current_task);
@@ -95,27 +98,16 @@ static void kmt_sem_wait(sem_t *sem){
     }
     sem->count--;
     kmt_spin_unlock(sem->lk);
-    if(flag==1) yield();*/
-    while (true) {
-        kmt_spin_lock(sem->lk);
-        if (sem->count > 0) {
-            sem->count--;
-            kmt_spin_unlock(sem->lk);
-            break;
-        }
-        kmt_spin_unlock(sem->lk);
-    }
+    if(flag==1) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
-    /*kmt_spin_lock(sem->lk);
+    //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    kmt_spin_lock(sem->lk);
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
-    kmt_spin_unlock(sem->lk);*/
-    kmt_spin_lock(sem->lk);
-    sem->count++;
     kmt_spin_unlock(sem->lk);
 }
 
