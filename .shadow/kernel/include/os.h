@@ -16,6 +16,7 @@ extern struct cpu cpus[];
 typedef struct queue{
     task_t *element[QUESIZ];
     int hd,tl;
+    int cnt;
 }queue_t;
 
 struct spinlock{
