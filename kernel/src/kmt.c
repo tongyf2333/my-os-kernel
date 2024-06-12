@@ -50,11 +50,6 @@ void pop_off(void) {
         iset(true);
 }
 
-
-static void kmt_init(){
-    current_task=NULL;
-    kmt_spin_init(&lock,"null");
-}
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     task->entry=entry;
     task->name=name;
@@ -124,6 +119,11 @@ static void kmt_sem_signal(sem_t *sem){
         task->status = RUNNABLE;
     } 
     kmt_spin_unlock(sem->lk);
+}
+
+static void kmt_init(){
+    current_task=NULL;
+    kmt_spin_init(&lock,"null");
 }
 
 MODULE_DEF(kmt) = {
