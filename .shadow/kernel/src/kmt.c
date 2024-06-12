@@ -27,7 +27,7 @@ static struct cpu *mycpu(){
 bool holding(spinlock_t *lk) {
     return (
         lk->locked == LOCKED &&
-        lk->cpu == &cpus[cpu_current()]
+        lk->cpu == mycpu()
     );
 }
 void push_off(void) {
