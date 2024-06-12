@@ -1,5 +1,4 @@
 #include <common.h>
-#define STACK_SIZE 8192
 #define LOCKED 1
 #define UNLOCKED 0
 
@@ -50,22 +49,11 @@ void pop_off(void) {
         iset(true);
 }
 
-static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
-    task->entry=entry;
-    task->name=name;
-    task->status=RUNNING;
-    task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
-    kmt_spin_lock(&lock);
-    tasks[task_count]=task;
-    task_count++;
-    kmt_spin_unlock(&lock);
-    if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
-    return 0;
-}
 static void kmt_teardown(task_t *task){
     pmm->free(task->context);
     task->status=DEAD;
 }
+
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
     lk->locked=0;
@@ -98,7 +86,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 
 }
 static void kmt_sem_wait(sem_t *sem){
-    //printf("P:%s\n",sem->lk->name);
+    printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     while(sem->count<=0){
         enqueue(sem->que,current_task);
@@ -111,12 +99,12 @@ static void kmt_sem_wait(sem_t *sem){
     kmt_spin_unlock(sem->lk);
 }
 static void kmt_sem_signal(sem_t *sem){
-    //printf("V:%s\n",sem->lk->name);
+    printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
         task_t *task = dequeue(sem->que);
-        task->status = RUNNABLE;
+        task->status = RUNNING;
     } 
     kmt_spin_unlock(sem->lk);
 }
@@ -124,6 +112,19 @@ static void kmt_sem_signal(sem_t *sem){
 static void kmt_init(){
     current_task=NULL;
     kmt_spin_init(&lock,"null");
+}
+
+static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+    task->entry=entry;
+    task->name=name;
+    task->status=RUNNING;
+    task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
+    kmt_spin_lock(&lock);
+    tasks[task_count]=task;
+    task_count++;
+    kmt_spin_unlock(&lock);
+    if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
+    return 0;
 }
 
 MODULE_DEF(kmt) = {
