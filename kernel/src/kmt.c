@@ -27,7 +27,7 @@ static struct cpu *mycpu(){
 bool holding(spinlock_t *lk) {
     return (
         lk->locked == LOCKED &&
-        lk->cpu == &cpus[cpu_current()]
+        lk->cpu == mycpu()
     );
 }
 void push_off(void) {
@@ -57,7 +57,7 @@ static void kmt_teardown(task_t *task){
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
     lk->locked=0;
-    lk->cpu=0;
+    lk->cpu=mycpu();
 }
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
