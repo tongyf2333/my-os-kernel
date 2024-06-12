@@ -96,6 +96,7 @@ static void easy_test(){
 }
 
 static void hard_test(){
+    kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
@@ -109,7 +110,6 @@ static void os_run() {
     for (const char *s = "inside CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    kmt->sem_init(&empty, "empty", N);
     easy_test();
     printf("easy test passed\n");
     hard_test();
