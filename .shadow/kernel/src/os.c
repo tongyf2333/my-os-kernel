@@ -52,7 +52,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     do {
         current_task = current_task->next;
     } while (
-        /*current_task->cpu_id != cpu_current() ||*/
+        current_task->cpu_id != cpu_current() ||
         current_task->status != RUNNING 
     );
     current_task=current_task->next;
@@ -89,14 +89,6 @@ static void os_init() {
     kmt->sem_init(&fill,  "fill",  0);
 }
 
-static void easy_test(){
-    for(int i=1;i<=100000;i++){
-        kmt->spin_lock(&lk);
-        sum++;
-        kmt->spin_unlock(&lk);
-    }
-}
-
 static void hard_test(){
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
@@ -110,8 +102,6 @@ static void os_run() {
     for (const char *s = "inside CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    easy_test();
-    printf("easy test passed\n");
     hard_test();
     iset(true);
     yield();
