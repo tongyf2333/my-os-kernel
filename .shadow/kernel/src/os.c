@@ -86,6 +86,9 @@ static void os_init() {
 }
 
 static void os_run() {
+    for (const char *s = "inside CPU #*\n"; *s; s++) {
+        putch(*s == '*' ? '0' + cpu_current() : *s);
+    }
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
