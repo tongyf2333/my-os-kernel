@@ -105,7 +105,7 @@ static void kmt_sem_signal(sem_t *sem){
     sem->count++;
     if((sem->que->hd)<=(sem->que->tl)) {
         task_t *task = dequeue(sem->que);
-        task->status = RUNNABLE;
+        task->status = RUNNING;
     } 
     kmt_spin_unlock(sem->lk);
 }

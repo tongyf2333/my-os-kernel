@@ -55,7 +55,6 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         current_task->status != RUNNING 
     );
     current_task=current_task->next;
-    current_task->status=RUNNING;
     return current_task->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
