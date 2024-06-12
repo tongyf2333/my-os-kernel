@@ -73,8 +73,8 @@ static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)) {
         panic("double release");
     }
-    lk->cpu = NULL;
     __sync_synchronize();
+    lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
 }
