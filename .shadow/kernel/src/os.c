@@ -2,6 +2,7 @@
 #define INT_MIN -2147483647
 #define INT_MAX 2147483647
 sem_t empty, fill;
+spinlock_t lk;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
@@ -21,7 +22,7 @@ typedef struct hand{
 }hand;
 
 hand table[1024],temp[1024];
-int cnt=0;
+int cnt=0,sum=0;
 
 int cmp1(hand a,hand b){
     return a.seq<b.seq;
@@ -85,11 +86,16 @@ static void os_init() {
     //dev->init();
 }
 
-static void os_run() {
-    for (const char *s = "inside CPU #*\n"; *s; s++) {
-        putch(*s == '*' ? '0' + cpu_current() : *s);
+static void easy_test(){
+    kmt->spin_init(&lk,"easy");
+    for(int i=1;i<=100000;i++){
+        kmt->spin_lock(&lk);
+        sum++;
+        kmt->spin_unlock(&lk);
     }
-    kmt->sem_init(&empty, "empty", N);
+}
+
+static void hard_test(){
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
@@ -97,6 +103,15 @@ static void os_run() {
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
+}
+
+static void os_run() {
+    for (const char *s = "inside CPU #*\n"; *s; s++) {
+        putch(*s == '*' ? '0' + cpu_current() : *s);
+    }
+    kmt->sem_init(&empty, "empty", N);
+    easy_test();
+    hard_test();
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
