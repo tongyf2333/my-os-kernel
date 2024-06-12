@@ -96,7 +96,7 @@ static void kmt_sem_wait(sem_t *sem){
         current_task->status=BLOCKED;
         flag=1;
     }
-    sem->count--;
+    else sem->count--;
     kmt_spin_unlock(sem->lk);
     if(flag==1) yield();
 }
