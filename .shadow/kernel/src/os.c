@@ -52,7 +52,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     do {
         current_task = current_task->next;
     } while (
-        current_task->cpu_id != cpu_current() ||
+        /*current_task->cpu_id != cpu_current() ||*/
         current_task->status != RUNNING 
     );
     current_task=current_task->next;
