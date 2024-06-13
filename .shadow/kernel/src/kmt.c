@@ -133,7 +133,6 @@ static void kmt_init(){
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     kmt_spin_lock(&lock);
     task->entry=entry;
-    task->cpu_id=cpu_current();
     task->name=name;
     task->status=RUNNING;
     task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
