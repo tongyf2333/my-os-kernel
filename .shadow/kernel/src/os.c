@@ -8,8 +8,8 @@ spinlock_t lk;
 #define N 5
 #define NPROD 1
 #define NCONS 1
-void Tproduce(void *arg) { while (1) { P(&empty); /*printf("semcnt:%d %d\n",empty.count+1,fill.count+1);*/putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { assert(0);P(&fill);  putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); /*printf("semcnt:%d %d\n",empty.count+1,fill.count+1);*//*putch('(');*/ V(&fill);  } }
+void Tconsume(void *arg) { while (1) { assert(0);P(&fill);  /*putch(')');*/ V(&empty); } }
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
@@ -57,6 +57,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         current_task->status != RUNNING 
     );
     current_task=current_task->next;
+    printf("name:%s\n",current_task->name);
     return current_task->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
