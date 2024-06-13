@@ -2,7 +2,6 @@
 #define INT_MIN -2147483647
 #define INT_MAX 2147483647
 sem_t empty, fill;
-spinlock_t lk;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
@@ -84,7 +83,6 @@ static void os_init() {
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     //dev->init();
-    kmt->spin_init(&lk,"easy");
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
 }

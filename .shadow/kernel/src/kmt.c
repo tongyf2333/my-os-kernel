@@ -72,6 +72,7 @@ static void kmt_spin_lock(spinlock_t *lk){
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)) {
+        printf("lock:%s\n",lk->name);
         panic("double release");
     }
     lk->cpu = NULL;
