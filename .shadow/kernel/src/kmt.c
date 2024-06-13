@@ -117,8 +117,8 @@ static void kmt_sem_wait(sem_t *sem){
         enqueue(sem->que,current_task);
         current_task->status=BLOCKED;
         kmt_spin_unlock(sem->lk);
-        yield();
         while(current_task->status!=RUNNING){
+            yield();
             __sync_synchronize();
         }
     }
