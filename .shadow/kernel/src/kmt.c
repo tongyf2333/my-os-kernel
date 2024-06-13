@@ -61,7 +61,7 @@ static void kmt_teardown(task_t *task){
 
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
-    lk->locked=0;
+    lk->locked=UNLOCKED;
     lk->cpu=NULL;
 }
 static void kmt_spin_lock(spinlock_t *lk){
