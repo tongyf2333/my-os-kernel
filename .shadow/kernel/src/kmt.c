@@ -74,7 +74,6 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
-    __sync_synchronize();
     lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
@@ -83,7 +82,6 @@ static void kmt_spin_unlock(spinlock_t *lk){
         panic("double release");//bang!
     }
     lk->cpu = NULL;
-    __sync_synchronize();
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
 }
