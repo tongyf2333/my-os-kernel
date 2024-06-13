@@ -90,19 +90,33 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 }
 static void kmt_sem_wait(sem_t *sem){
     //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
-    kmt_spin_lock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
     int flag=0;
     if(sem->count<=0){
         enqueue(sem->que,current_task);
         current_task->status=BLOCKED;
         flag=1;
-        /*kmt_spin_unlock(sem->lk);
+        kmt_spin_unlock(sem->lk);
         yield();
-        kmt_spin_lock(sem->lk);*/
+        kmt_spin_lock(sem->lk);
     }
     else sem->count--;
     kmt_spin_unlock(sem->lk);
-    if(flag==1) yield();
+    if(flag==1) yield();*/
+    kmt_spin_lock(sem->lk);
+    if(sem->count>0){
+        sem->count--;
+        kmt_spin_unlock(sem->lk);
+    }
+    else{
+        enqueue(sem->que,current_task);
+        current_task->status=BLOCKED;
+        kmt_spin_unlock(sem->lk);
+        yield();
+        while(current_task->status!=RUNNING){
+            __sync_synchronize();
+        }
+    }
 }
 static void kmt_sem_signal(sem_t *sem){
     //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
