@@ -12,11 +12,13 @@ spinlock_t lock;
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
+    q->cnt++;
 }
 
 static task_t *dequeue(queue_t *q){
     task_t *res=q->element[q->hd];
     q->hd=((q->hd)+1)%QUESIZ;
+    q->cnt--;
     return res;
 }
 
@@ -57,7 +59,7 @@ static void kmt_teardown(task_t *task){
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
     lk->locked=0;
-    lk->cpu=mycpu();
+    lk->cpu=NULL;
 }
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
@@ -66,14 +68,12 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
-    __sync_synchronize();
     lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)) {
         panic("double release");
     }
-    __sync_synchronize();
     lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
@@ -85,26 +85,29 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que=pmm->alloc(sizeof(queue_t));
     sem->que->hd=0;
     sem->que->tl=-1;
-
+    sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     int flag=0;
     if(sem->count<=0){
         enqueue(sem->que,current_task);
         current_task->status=BLOCKED;
         flag=1;
+        /*kmt_spin_unlock(sem->lk);
+        yield();
+        kmt_spin_lock(sem->lk);*/
     }
     sem->count--;
     kmt_spin_unlock(sem->lk);
     if(flag==1) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
-    printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     sem->count++;
-    if((sem->que->hd)<=(sem->que->tl)) {
+    if((sem->que->cnt)>0) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
