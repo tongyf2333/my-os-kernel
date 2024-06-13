@@ -137,20 +137,21 @@ static void kmt_sem_signal(sem_t *sem){
 static void kmt_init(){
     current_task=NULL;
     kmt_spin_init(&lock,"null");
+    task_count=0;
 }
 
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+    kmt_spin_lock(&lock);
     task->entry=entry;
     task->cpu_id=cpu_current();
     task->name=name;
     task->status=RUNNING;
     task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
-    kmt_spin_lock(&lock);
     task->id=task_count;
     tasks[task_count]=task;
     task_count++;
-    kmt_spin_unlock(&lock);
     if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
+    kmt_spin_unlock(&lock);
     return 0;
 }
 
