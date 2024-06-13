@@ -107,11 +107,11 @@ static void kmt_sem_wait(sem_t *sem){
 static void kmt_sem_signal(sem_t *sem){
     //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
-    sem->count++;
     if((sem->que->cnt)>0) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
+    else sem->count++;
     kmt_spin_unlock(sem->lk);
 }
 
