@@ -28,6 +28,14 @@ int cmp1(hand a,hand b){
     return a.seq<b.seq;
 }
 
+int task_check(){
+    for(int i=0;i<task_count;i++){
+        if(tasks[i]->next->id<0||tasks[i]->next->id>=task_count) return 0;
+        if(tasks[i]->next->id==tasks[i]->id) return 0;
+    }
+    return 1;
+}
+
 void merge(int l,int r){
 	if(l==r) return;
 	int mid=(l+r)/2;
@@ -49,6 +57,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     return current_task->context;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
+    assert(task_check());
     do {
         current_task = current_task->next;
     } while (
