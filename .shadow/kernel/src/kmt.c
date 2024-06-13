@@ -4,7 +4,8 @@
 
 struct cpu cpus[16];
 
-struct task *tasks[128],*current_task;
+struct task *tasks[128];
+struct task *current_task[16];
 int task_count=0;
 
 spinlock_t lock;
@@ -113,8 +114,8 @@ static void kmt_sem_wait(sem_t *sem){
     int acquired=0;
     kmt_spin_lock(sem->lk);
     if (sem->count<=0) {
-        enqueue(sem->que, current_task);
-        current_task->status = BLOCKED;
+        enqueue(sem->que, current_task[cpu_current()]);
+        current_task[cpu_current()]->status = BLOCKED;
     } else {
         sem->count++;
         acquired = 1;
@@ -134,10 +135,9 @@ static void kmt_sem_signal(sem_t *sem){
 }
 
 static void kmt_init(){
-    current_task=NULL;
     kmt_spin_init(&lock,"null");
     task_count=0;
-    for(int i=0;i<8;i++) cpus[i].noff=0;
+    for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
 }
 
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){

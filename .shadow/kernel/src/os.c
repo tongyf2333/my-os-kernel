@@ -13,7 +13,7 @@ static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
 
-extern task_t *tasks[],*current_task;
+extern task_t *tasks[],*current_task[];
 extern int task_count;
 
 typedef struct hand{
@@ -60,21 +60,21 @@ void merge(int l,int r){
 }
 
 static Context *kmt_context_save(Event ev, Context *ctx){
-    if (!current_task) current_task = tasks[0];
-    else current_task->context = ctx;
-    return current_task->context;
+    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
+    else current_task[cpu_current()]->context = ctx;
+    return current_task[cpu_current()]->context;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     assert(task_check());
     do {
-        current_task = current_task->next;
+        current_task[cpu_current()] = current_task[cpu_current()]->next;
     } while (
         /*current_task->cpu_id != cpu_current() ||*/
-        current_task->status != RUNNING 
+        current_task[cpu_current()]->status != RUNNING 
     );
     //putch('X');
     //printf("%d",current_task->id+1);
-    return current_task->context;
+    return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
     Context *next = NULL;
