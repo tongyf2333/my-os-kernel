@@ -65,7 +65,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         current_task->status != RUNNING 
     );
     //putch('X');
-    printf("%d",current_task->id+1);
+    printf("%d",task_count);
     return current_task->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
