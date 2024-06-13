@@ -7,8 +7,8 @@ sem_t empty, fill;
 #define N 5
 #define NPROD 1
 #define NCONS 1
-void Tproduce(void *arg) { while (1) { P(&empty); /*putch('(');*/ V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  /*putch(')');*/ V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
@@ -57,7 +57,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     return current_task->context;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
-    assert(task_check());
+    assert(task_check());//bang!
     do {
         current_task = current_task->next;
     } while (
