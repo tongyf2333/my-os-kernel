@@ -8,7 +8,7 @@ spinlock_t lk;
 #define N 5
 #define NPROD 1
 #define NCONS 1
-void Tproduce(void *arg) { while (1) { P(&empty); printf("semcnt:%d\n",empty.count+1);putch('('); V(&fill);  } }
+void Tproduce(void *arg) { while (1) { P(&empty); printf("semcnt:%d %d\n",empty.count+1,fill.count+1);putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
