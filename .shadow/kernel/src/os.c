@@ -30,8 +30,8 @@ int cmp1(hand a,hand b){
 
 int task_check(){
     for(int i=0;i<task_count;i++){
-        if(tasks[i]->next->id<0||tasks[i]->next->id>=task_count) return 0;
-        if(tasks[i]->next->id==tasks[i]->id) return 0;
+        if(i==task_count-1&&tasks[i]->next->id!=0) return 0;
+        else if(tasks[i]->next->id!=i+1) return 0;
     }
     return 1;
 }
@@ -65,7 +65,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         current_task->status != RUNNING 
     );
     //putch('X');
-    printf("%d",task_count);
+    //printf("%d",task_count);
     return current_task->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
