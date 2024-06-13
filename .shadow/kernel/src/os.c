@@ -72,8 +72,8 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         /*current_task->cpu_id != cpu_current() ||*/
         current_task->status != RUNNING 
     );
-    putch('X');
-    //printf("%s%d",current_task->name,current_task->id+1);
+    //putch('X');
+    printf("%d",current_task->id+1);
     return current_task->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
