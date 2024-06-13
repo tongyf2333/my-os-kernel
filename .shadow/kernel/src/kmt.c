@@ -100,7 +100,7 @@ static void kmt_sem_wait(sem_t *sem){
         yield();
         kmt_spin_lock(sem->lk);*/
     }
-    sem->count--;
+    else sem->count--;
     kmt_spin_unlock(sem->lk);
     if(flag==1) yield();
 }
