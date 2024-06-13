@@ -41,13 +41,13 @@ void push_off(void) {
 }
 
 void pop_off(void) {
-    struct cpu *c = mycpu();
+    //struct cpu *c = mycpu();
     if(ienabled())
         panic("pop_off - interruptible");
-    if(c->noff < 1)
+    if(mycpu()->noff < 1)
         panic("pop_off");
-    c->noff -= 1;
-    if(c->noff == 0 && c->intena)
+    mycpu()->noff -= 1;
+    if(mycpu()->noff == 0 && mycpu()->intena)
         iset(true);
 }
 
