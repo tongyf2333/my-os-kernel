@@ -64,7 +64,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         /*current_task->cpu_id != cpu_current() ||*/
         current_task->status != RUNNING 
     );
-    printf("at:%d",current_task->id+1);
+    //printf("at:%d",current_task->id+1);
     return current_task->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
