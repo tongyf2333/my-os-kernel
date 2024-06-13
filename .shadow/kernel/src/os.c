@@ -31,8 +31,14 @@ int cmp1(hand a,hand b){
 int task_check(){
     int flag=1;
     for(int i=0;i<task_count;i++){
-        if(i==task_count-1&&tasks[i]->next->id!=0) flag=0;
-        else if(tasks[i]->next->id!=i+1) flag=0;
+        if(i==task_count-1&&tasks[i]->next->id!=0){
+            flag=0;
+            assert(0);
+        }
+        else if(tasks[i]->next->id!=i+1){
+            flag=0;
+            assert(0);
+        }
         printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
     }
     return flag;
