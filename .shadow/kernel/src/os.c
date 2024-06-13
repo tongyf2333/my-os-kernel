@@ -120,6 +120,7 @@ static void os_run() {
     //hard_test();
     iset(true);
     yield();
+    assert(0);
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
