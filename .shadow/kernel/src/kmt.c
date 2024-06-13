@@ -9,6 +9,16 @@ int task_count=0;
 
 spinlock_t lock;
 
+static void iset_true(){
+    iset(true);
+    printf("iset true");
+}
+
+static void iset_false(){
+    iset(false);
+    printf("iset false");
+}
+
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
@@ -35,7 +45,8 @@ bool holding(spinlock_t *lk) {
 }
 void push_off(void) {
     int old = ienabled();
-    iset(false);
+    //iset(false);
+    iset_false();
     if(mycpu()->noff == 0)
         mycpu()->intena = old;
     mycpu()->noff += 1;
@@ -49,7 +60,8 @@ void pop_off(void) {
         panic("pop_off");
     c->noff -= 1;
     if(c->noff == 0 && c->intena)
-        iset(true);
+        //iset(true);
+        iset_true();
 }
 
 static void kmt_teardown(task_t *task){
@@ -65,7 +77,7 @@ static void kmt_spin_init(spinlock_t *lk, const char *name){
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
     if (holding(lk)){
-        printf("name:%s\n",lk->name);
+        //printf("name:%s\n",lk->name);
         panic("deadlock!");
     }
     int got;
@@ -77,7 +89,7 @@ static void kmt_spin_lock(spinlock_t *lk){
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
-        printf("name:%s\n",lk->name);
+        //printf("name:%s\n",lk->name);
         panic("double release");
     }
     lk->cpu = NULL;

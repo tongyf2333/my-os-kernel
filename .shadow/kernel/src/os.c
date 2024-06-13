@@ -7,8 +7,8 @@ sem_t empty, fill;
 #define N 5
 #define NPROD 1
 #define NCONS 1
-void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); /*putch('(');*/ V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  /*putch(')');*/ V(&empty); } }
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
