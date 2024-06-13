@@ -72,7 +72,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         current_task->cpu_id != cpu_current() ||
         current_task->status != RUNNING 
     );
-    //putch('X');
+    putch('X');
     //printf("%d",task_count);
     return current_task->context;
 }
