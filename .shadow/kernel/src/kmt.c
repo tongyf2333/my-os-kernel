@@ -132,6 +132,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->status=RUNNING;
     task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
     kmt_spin_lock(&lock);
+    task->id=task_count;
     tasks[task_count]=task;
     task_count++;
     kmt_spin_unlock(&lock);
