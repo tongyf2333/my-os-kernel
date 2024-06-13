@@ -103,9 +103,6 @@ static void os_run() {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
     hard_test();
-    for(int i=0;i<task_count;i++){
-        printf("%s\n",tasks[i]->name);
-    }
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
