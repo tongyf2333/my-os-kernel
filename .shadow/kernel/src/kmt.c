@@ -11,12 +11,12 @@ spinlock_t lock;
 
 static void iset_true(){
     iset(true);
-    printf("iset true %d\n",cpu_current());
+    printf("iset true %d\n",cpu_current()+1);
 }
 
 static void iset_false(){
     iset(false);
-    printf("iset false %d\n",cpu_current());
+    printf("iset false %d\n",cpu_current()+1);
 }
 
 static void enqueue(queue_t *q,task_t *elem){
