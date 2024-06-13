@@ -77,16 +77,6 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-static void os_init() {
-    pmm->init();
-    kmt->init();
-    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
-    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    //dev->init();
-    kmt->sem_init(&empty, "empty", N);
-    kmt->sem_init(&fill,  "fill",  0);
-}
-
 static void hard_test(){
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
@@ -96,11 +86,22 @@ static void hard_test(){
     }
 }
 
+static void os_init() {
+    pmm->init();
+    kmt->init();
+    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
+    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
+    //dev->init();
+    kmt->sem_init(&empty, "empty", N);
+    kmt->sem_init(&fill,  "fill",  0);
+    hard_test();
+}
+
 static void os_run() {
     for (const char *s = "inside CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
-    hard_test();
+    //hard_test();
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
