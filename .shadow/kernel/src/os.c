@@ -15,6 +15,7 @@ static inline task_t *task_alloc() {
 }
 
 extern task_t *tasks[],*current_task;
+extern int task_count;
 
 typedef struct hand{
     int seq,event;
@@ -103,6 +104,9 @@ static void os_run() {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
     hard_test();
+    for(int i=0;i<task_count;i++){
+        printf("%s\n",tasks[i]->name);
+    }
     iset(true);
     yield();
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {

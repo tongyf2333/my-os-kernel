@@ -88,7 +88,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
     //int flag=0;
     if(sem->count<=0){
