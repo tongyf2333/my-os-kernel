@@ -37,7 +37,7 @@ static struct cpu *mycpu(){
 }
 
 bool holding(spinlock_t *lk) {
-    assert(!ienabled());
+    assert(!ienabled());//bang!
     return (
         lk->locked == LOCKED &&
         lk->cpu == mycpu()
@@ -90,7 +90,7 @@ static void kmt_spin_lock(spinlock_t *lk){
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
         //printf("name:%s\n",lk->name);
-        panic("double release");
+        panic("double release");//bang!
     }
     lk->cpu = NULL;
     __sync_synchronize();
