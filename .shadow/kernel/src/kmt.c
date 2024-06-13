@@ -64,7 +64,10 @@ static void kmt_spin_init(spinlock_t *lk, const char *name){
 }
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
-    if (holding(lk)) panic("deadlock!");
+    if (holding(lk)){
+        printf("name:%s\n",lk->name);
+        panic("deadlock!");
+    }
     int got;
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
@@ -72,7 +75,10 @@ static void kmt_spin_lock(spinlock_t *lk){
     lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
-    if (!holding(lk)) panic("double release");
+    if (!holding(lk)){
+        printf("name:%s\n",lk->name);
+        panic("double release");
+    }
     lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
