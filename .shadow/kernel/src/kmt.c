@@ -128,6 +128,7 @@ static void kmt_init(){
     current_task=NULL;
     kmt_spin_init(&lock,"null");
     task_count=0;
+    for(int i=0;i<8;i++) cpus[i].noff=0;
 }
 
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
