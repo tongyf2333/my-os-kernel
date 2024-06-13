@@ -35,7 +35,7 @@ int task_check(){
             flag=0;printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
             assert(0);
         }
-        else if(i<task_count-1&&tasks[i]->next->id!=i+1){
+        if(i<task_count-1&&tasks[i]->next->id!=i+1){
             flag=0;printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
             assert(0);
         }
