@@ -95,9 +95,9 @@ static void kmt_sem_wait(sem_t *sem){
         enqueue(sem->que,current_task);
         current_task->status=BLOCKED;
         //flag=1;
-        kmt_spin_unlock(sem->lk);
+        //kmt_spin_unlock(sem->lk);
         yield();
-        kmt_spin_lock(sem->lk);
+        //kmt_spin_lock(sem->lk);
     }
     sem->count--;
     kmt_spin_unlock(sem->lk);
