@@ -72,6 +72,7 @@ static void kmt_spin_lock(spinlock_t *lk){
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)) {
+        //printf("lock:%s\n",lk->name);
         panic("double release");
     }
     lk->cpu = NULL;
@@ -90,27 +91,28 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 static void kmt_sem_wait(sem_t *sem){
     //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
-    int flag=0;
-    if(sem->count<=0){
+    if(sem->count>0){
+        sem->count--;
+        kmt_spin_unlock(sem->lk);
+    }
+    else{
         enqueue(sem->que,current_task);
         current_task->status=BLOCKED;
-        flag=1;
-        /*kmt_spin_unlock(sem->lk);
+        kmt_spin_unlock(sem->lk);
         yield();
-        kmt_spin_lock(sem->lk);*/
+        while(current_task->status!=RUNNING){
+            __sync_synchronize();
+        }
     }
-    sem->count--;
-    kmt_spin_unlock(sem->lk);
-    if(flag==1) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
     //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
     kmt_spin_lock(sem->lk);
-    sem->count++;
     if((sem->que->cnt)>0) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
+    else sem->count++;
     kmt_spin_unlock(sem->lk);
 }
 
