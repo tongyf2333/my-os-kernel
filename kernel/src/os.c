@@ -47,30 +47,23 @@ void merge(int l,int r){
 static Context *kmt_context_save(Event ev, Context *ctx){
     if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
     else current_task[cpu_current()]->context = ctx;
-    //return current_task[cpu_current()]->context;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
-        //printf("scheduling %d\n",current_task[cpu_current()]->id+1);
     } while (
         current_task[cpu_current()]->status != RUNNING ||
         ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
     );
     current_task[cpu_current()]->cpu_id=cpu_current();
-    //printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
-    //printf("VVV\n");
-    //printf("%d\n",ev.event+1);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
-        //if(ev.event==EVENT_IRQ_IODEV) printf("XXX\n");
         if (h.event == EVENT_NULL || h.event == ev.event) {
-            //printf("%d\n",h.event+1);
             Context *r = h.handler(ev, ctx);
             panic_on(r && next, "returning multiple contexts");
             if (r) next = r;
@@ -102,9 +95,9 @@ static void os_init() {
     kmt->create(task_alloc(),"irq",solver,NULL);
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    dev->init();
-    kmt->sem_init(&empty, "empty", N);
-    kmt->sem_init(&fill,  "fill",  0);
+    //dev->init();
+    //kmt->sem_init(&empty, "empty", N);
+    //kmt->sem_init(&fill,  "fill",  0);
     //hard_test();
     //while(1);
 }
