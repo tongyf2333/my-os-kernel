@@ -4,7 +4,8 @@
 
 struct cpu cpus[16];
 
-struct task *tasks[128],*current_task;
+struct task *tasks[128];
+struct task *current_task[16];
 int task_count=0;
 
 spinlock_t lock;
@@ -27,6 +28,7 @@ static struct cpu *mycpu(){
 }
 
 bool holding(spinlock_t *lk) {
+    assert(!ienabled());//bang!
     return (
         lk->locked == LOCKED &&
         lk->cpu == mycpu()
@@ -58,12 +60,15 @@ static void kmt_teardown(task_t *task){
 
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
-    lk->locked=0;
+    lk->locked=UNLOCKED;
     lk->cpu=NULL;
 }
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
-    if (holding(lk)) panic("deadlock!");
+    if (holding(lk)){
+        //printf("name:%s\n",lk->name);
+        panic("deadlock!");
+    }
     int got;
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
@@ -71,9 +76,9 @@ static void kmt_spin_lock(spinlock_t *lk){
     lk->cpu=mycpu();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
-    if (!holding(lk)) {
-        //printf("lock:%s\n",lk->name);
-        panic("double release");
+    if (!holding(lk)){
+        //printf("name:%s\n",lk->name);
+        panic("double release");//bang!
     }
     lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
@@ -90,20 +95,19 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
 }
 static void kmt_sem_wait(sem_t *sem){
     //printf("P:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
+    assert(ienabled());
+    int acquired=0;
     kmt_spin_lock(sem->lk);
-    if(sem->count>0){
+    if (sem->count<=0) {
+        enqueue(sem->que, current_task[cpu_current()]);
+        current_task[cpu_current()]->status = BLOCKED;
+        //current_task[cpu_current()]->cpu_id=-1;
+    } else {
         sem->count--;
-        kmt_spin_unlock(sem->lk);
+        acquired = 1;
     }
-    else{
-        enqueue(sem->que,current_task);
-        current_task->status=BLOCKED;
-        kmt_spin_unlock(sem->lk);
-        yield();
-        while(current_task->status!=RUNNING){
-            __sync_synchronize();
-        }
-    }
+    kmt_spin_unlock(sem->lk);
+    if (!acquired) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
     //printf("V:%s at cpu:%d\n",sem->lk->name,cpu_current()+1);
@@ -117,21 +121,25 @@ static void kmt_sem_signal(sem_t *sem){
 }
 
 static void kmt_init(){
-    current_task=NULL;
     kmt_spin_init(&lock,"null");
+    task_count=0;
+    for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
 }
 
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+    kmt_spin_lock(&lock);
     task->entry=entry;
-    task->cpu_id=cpu_current();
     task->name=name;
     task->status=RUNNING;
-    task->context=kcontext((Area){.start=&task->stack,.end=task+1,},entry,arg);
-    kmt_spin_lock(&lock);
+    task->cpu_id=-1;
+    assert((intptr_t)(&task->stack)==(intptr_t)(task->stack));
+    task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
+    task->id=task_count;
     tasks[task_count]=task;
     task_count++;
+    task->next=tasks[0];
+    if(task_count!=1) tasks[task_count-2]->next=task;
     kmt_spin_unlock(&lock);
-    if(task_count!=1) task->next=tasks[0],tasks[task_count-2]->next=tasks[task_count-1];
     return 0;
 }
 

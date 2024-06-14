@@ -13,7 +13,7 @@ static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
 
-extern task_t *tasks[],*current_task;
+extern task_t *tasks[],*current_task[];
 extern int task_count;
 
 typedef struct hand{
@@ -26,6 +26,22 @@ int cnt=0,sum=0;
 
 int cmp1(hand a,hand b){
     return a.seq<b.seq;
+}
+
+int task_check(){
+    int flag=1;
+    for(int i=0;i<task_count;i++){
+        if(i==task_count-1&&tasks[i]->next->id!=0){
+            flag=0;printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
+            assert(0);
+        }
+        if(i<task_count-1&&tasks[i]->next->id!=i+1){
+            flag=0;printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
+            assert(0);
+        }
+        //printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
+    }
+    return flag;
 }
 
 void merge(int l,int r){
@@ -44,18 +60,21 @@ void merge(int l,int r){
 }
 
 static Context *kmt_context_save(Event ev, Context *ctx){
-    if (!current_task) current_task = tasks[0];
-    else current_task->context = ctx;
-    return current_task->context;
+    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
+    else current_task[cpu_current()]->context = ctx;
+    return current_task[cpu_current()]->context;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
+    assert(task_check());
     do {
-        current_task = current_task->next;
+        current_task[cpu_current()] = current_task[cpu_current()]->next;
     } while (
-        /*current_task->cpu_id != cpu_current() ||*/
-        current_task->status != RUNNING 
+        current_task[cpu_current()]->status != RUNNING ||
+        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
     );
-    return current_task->context;
+    current_task[cpu_current()]->cpu_id=cpu_current();
+    //printf("%d",current_task[cpu_current()]->id+1);
+    return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
     Context *next = NULL;
@@ -66,7 +85,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r) next = r;
         }
     }
-    panic_on(!next, "return to NULL context");
+    panic_on(!next, "return to NULL context");//bang!!!
     return next;
 }
 
@@ -75,16 +94,6 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].handler=handler;
     table[cnt].seq=seq;
     merge(1,cnt);
-}
-
-static void os_init() {
-    pmm->init();
-    kmt->init();
-    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
-    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    //dev->init();
-    kmt->sem_init(&empty, "empty", N);
-    kmt->sem_init(&fill,  "fill",  0);
 }
 
 static void hard_test(){
@@ -96,13 +105,22 @@ static void hard_test(){
     }
 }
 
-static void os_run() {
-    for (const char *s = "inside CPU #*\n"; *s; s++) {
-        putch(*s == '*' ? '0' + cpu_current() : *s);
-    }
+static void os_init() {
+    pmm->init();
+    kmt->init();
+    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
+    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
+    //dev->init();
+    kmt->sem_init(&empty, "empty", N);
+    kmt->sem_init(&fill,  "fill",  0);
     hard_test();
+}
+
+static void os_run() {
+    //hard_test();
     iset(true);
     yield();
+    assert(0);
     for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
         putch(*s == '*' ? '0' + cpu_current() : *s);
     }
