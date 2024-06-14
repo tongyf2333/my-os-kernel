@@ -204,6 +204,7 @@ void dev_input_task(void *args) {
       known_time = time;
     }
     printf("wait\n");
+    assert(ienabled());
     kmt->sem_wait(&sem_kbdirq);
     printf("back\n");
   }
