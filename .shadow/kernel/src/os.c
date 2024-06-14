@@ -62,6 +62,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
 }
 static Context *os_trap(Event ev, Context *ctx){
     printf("VVV\n");
+    printf("%d\n",ev.event+1);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
