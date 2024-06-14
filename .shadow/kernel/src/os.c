@@ -114,7 +114,7 @@ static void os_init() {
     /*kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     hard_test();*/
-    while(1);
+    //while(1);
 }
 
 static void os_run() {
