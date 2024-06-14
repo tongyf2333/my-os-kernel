@@ -69,8 +69,8 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
     } while (
-        current_task[cpu_current()]->status != RUNNING ||
-        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
+        current_task[cpu_current()]->status != RUNNING /*||
+        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))*/
     );
     current_task[cpu_current()]->cpu_id=cpu_current();
     printf("%d",current_task[cpu_current()]->id+1);
