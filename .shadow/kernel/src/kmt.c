@@ -15,7 +15,7 @@ spinlock_t lock;
 extern void solver();
 
 static Context *kmt_context_save(Event ev, Context *ctx){
-    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
+    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[cpu_current()];
     else current_task[cpu_current()]->context = ctx;
     return NULL;
 }
@@ -164,7 +164,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
-    task->cpu_id=-1;
+    task->cpu_id=task_count%cpu_count();
     task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->id=task_count;
     tasks[task_count]=task;
