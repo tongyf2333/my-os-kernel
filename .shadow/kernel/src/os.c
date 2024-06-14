@@ -87,14 +87,14 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-static void hard_test(){
+/*static void hard_test(){
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
     }
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}
+}*/
 
 static void os_init() {
     pmm->init();
@@ -102,10 +102,10 @@ static void os_init() {
     kmt->create(task_alloc(),"irq",solver,NULL);
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    //dev->init();
+    dev->init();
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
-    hard_test();
+    //hard_test();
     //while(1);
 }
 
