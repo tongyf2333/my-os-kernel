@@ -22,7 +22,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
-        putch('V');
+        printf("%d",current_task[cpu_current()]->id);
     } while (
         current_task[cpu_current()]->status != RUNNING ||
         ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
@@ -179,7 +179,7 @@ static void kmt_init(){
     kmt_spin_init(&lock,"null");
     task_count=0;
     for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
-    //kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
+    kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
 }
