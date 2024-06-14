@@ -1,7 +1,8 @@
 #include <common.h>
 #define LOCKED 1
 #define UNLOCKED 0
-
+#define INT_MIN -2147483647
+#define INT_MAX 2147483647
 
 struct cpu cpus[16];
 
@@ -10,6 +11,24 @@ struct task *current_task[16];
 int task_count=0;
 
 spinlock_t lock;
+
+extern void solver();
+
+static Context *kmt_context_save(Event ev, Context *ctx){
+    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
+    else current_task[cpu_current()]->context = ctx;
+    return NULL;
+}
+static Context *kmt_schedule(Event ev, Context *ctx){//bug here
+    do {
+        current_task[cpu_current()] = current_task[cpu_current()]->next;
+    } while (
+        current_task[cpu_current()]->status != RUNNING ||
+        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
+    );
+    current_task[cpu_current()]->cpu_id=cpu_current();
+    return current_task[cpu_current()]->context;
+}
 
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
@@ -115,13 +134,6 @@ static void kmt_sem_signal(sem_t *sem){
     kmt_spin_unlock(sem->lk);
 }
 
-static void kmt_init(){
-    kmt_spin_init(&lock,"null");
-    task_count=0;
-    for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
-    
-}
-
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     kmt_spin_lock(&lock);
     task->entry=entry;
@@ -138,6 +150,16 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     kmt_spin_unlock(&lock);
     return 0;
 }
+
+static void kmt_init(){
+    kmt_spin_init(&lock,"null");
+    task_count=0;
+    for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
+    kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
+    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
+    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
+}
+
 
 MODULE_DEF(kmt) = {
     .init=kmt_init,

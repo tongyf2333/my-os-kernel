@@ -24,22 +24,6 @@ void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 
 void solver(void *arg){while(1);}
 
-static Context *kmt_context_save(Event ev, Context *ctx){
-    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
-    else current_task[cpu_current()]->context = ctx;
-    return NULL;
-}
-static Context *kmt_schedule(Event ev, Context *ctx){//bug here
-    do {
-        current_task[cpu_current()] = current_task[cpu_current()]->next;
-    } while (
-        current_task[cpu_current()]->status != RUNNING ||
-        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
-    );
-    current_task[cpu_current()]->cpu_id=cpu_current();
-    return current_task[cpu_current()]->context;
-}
-
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
@@ -97,9 +81,6 @@ static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
-    kmt->create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
-    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
-    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
 
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
