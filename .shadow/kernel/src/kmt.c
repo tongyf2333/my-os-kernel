@@ -37,7 +37,6 @@ bool holding(spinlock_t *lk) {
 void push_off(void) {
     int old = ienabled();
     iset(false);
-    //iset_false();
     if(mycpu()->noff == 0)
         mycpu()->intena = old;
     mycpu()->noff += 1;
@@ -52,7 +51,6 @@ void pop_off(void) {
     c->noff -= 1;
     if(c->noff == 0 && c->intena)
         iset(true);
-        //iset_true();
 }
 
 static void kmt_teardown(task_t *task){
