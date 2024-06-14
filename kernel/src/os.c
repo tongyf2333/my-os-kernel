@@ -80,7 +80,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
 static void os_init() {
     pmm->init();
     kmt->init();
-    //dev->init();
+    dev->init();
 
     /*kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
