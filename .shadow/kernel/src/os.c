@@ -78,6 +78,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
+    printf("VVV\n");
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
