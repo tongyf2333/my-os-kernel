@@ -96,7 +96,9 @@ static void kmt_spin_lock(spinlock_t *lk){
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
+        printf("release:%s\n",lk->name);
         panic("double release");//bang!
+        assert(0);
     }
     lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
