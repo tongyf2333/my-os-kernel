@@ -266,7 +266,6 @@ devops_t tty_ops = {
 // ------------------------------------------------------------------
 
 void dev_tty_task(void *arg) {
-  printf("QAQ\n");
   device_t *in =     dev->lookup("input");
   device_t *ttydev = dev->lookup("tty1");
   device_t *fb =     dev->lookup("fb");
@@ -277,7 +276,6 @@ void dev_tty_task(void *arg) {
   uint64_t known_time = io_read(AM_TIMER_UPTIME).us;
 
   while (1) {
-    printf("QWQ\n");
     struct input_event ev;
     int nread = in->ops->read(in, 0, &ev, sizeof(ev));
     panic_on(nread == 0, "unknown error");
