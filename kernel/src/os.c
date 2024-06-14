@@ -5,8 +5,8 @@ sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
-#define NPROD 1
-#define NCONS 1
+#define NPROD 2
+#define NCONS 2
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 static inline task_t *task_alloc() {
@@ -96,24 +96,25 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-static void hard_test(){
+/*static void hard_test(){
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
     }
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}
+}*/
 
 static void os_init() {
     pmm->init();
     kmt->init();
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    //dev->init();
-    kmt->sem_init(&empty, "empty", N);
+    dev->init();
+    /*kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
-    hard_test();
+    hard_test();*/
+    //while(1);
 }
 
 static void os_run() {
