@@ -103,7 +103,7 @@ static void kmt_sem_wait(sem_t *sem){
         current_task[cpu_current()]->status = BLOCKED;
         //current_task[cpu_current()]->cpu_id=-1;
     } else {
-        sem->count++;
+        sem->count--;
         acquired = 1;
     }
     kmt_spin_unlock(sem->lk);
