@@ -140,7 +140,6 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->name=name;
     task->status=RUNNING;
     task->cpu_id=-1;
-    assert((intptr_t)(&task->stack)==(intptr_t)(task->stack));
     task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->id=task_count;
     tasks[task_count]=task;
