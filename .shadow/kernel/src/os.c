@@ -73,7 +73,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
     );
     current_task[cpu_current()]->cpu_id=cpu_current();
-    printf("%d",current_task[cpu_current()]->id);
+    printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
