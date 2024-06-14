@@ -81,6 +81,7 @@ static Context *os_trap(Event ev, Context *ctx){
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
+        if(ev.event==EVENT_IRQ_IODEV) printf("XXX\n");
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
             panic_on(r && next, "returning multiple contexts");
