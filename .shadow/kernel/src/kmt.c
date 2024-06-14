@@ -48,7 +48,7 @@ static struct cpu *mycpu(){
 }
 
 bool holding(spinlock_t *lk) {
-    //assert(!ienabled());
+    assert(!ienabled());
     return (
         lk->locked == LOCKED &&
         lk->cpu == mycpu()
