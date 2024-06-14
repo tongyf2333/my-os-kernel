@@ -1,6 +1,4 @@
 #include <common.h>
-#define INT_MIN -2147483647
-#define INT_MAX 2147483647
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
@@ -9,7 +7,6 @@ sem_t empty, fill;
 #define NCONS 2
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
-void solver(void *arg){while(1);}
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
 }
@@ -44,21 +41,6 @@ void merge(int l,int r){
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
 
-static Context *kmt_context_save(Event ev, Context *ctx){
-    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
-    else current_task[cpu_current()]->context = ctx;
-    return NULL;
-}
-static Context *kmt_schedule(Event ev, Context *ctx){//bug here
-    do {
-        current_task[cpu_current()] = current_task[cpu_current()]->next;
-    } while (
-        current_task[cpu_current()]->status != RUNNING /*||
-        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))*/
-    );
-    current_task[cpu_current()]->cpu_id=cpu_current();
-    return current_task[cpu_current()]->context;
-}
 static Context *os_trap(Event ev, Context *ctx){
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
@@ -92,9 +74,6 @@ static void hard_test(){
 static void os_init() {
     pmm->init();
     kmt->init();
-    kmt->create(task_alloc(),"irq",solver,NULL);
-    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
-    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     //dev->init();
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
