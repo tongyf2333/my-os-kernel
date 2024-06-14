@@ -52,18 +52,18 @@ static Context *kmt_context_save(Event ev, Context *ctx){
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
-        printf("scheduling %d\n",current_task[cpu_current()]->id+1);
+        //printf("scheduling %d\n",current_task[cpu_current()]->id+1);
     } while (
         current_task[cpu_current()]->status != RUNNING ||
         ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
     );
     current_task[cpu_current()]->cpu_id=cpu_current();
-    printf("%d",current_task[cpu_current()]->id+1);
+    //printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
-    printf("VVV\n");
-    printf("%d\n",ev.event+1);
+    //printf("VVV\n");
+    //printf("%d\n",ev.event+1);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -86,24 +86,24 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-/*static void hard_test(){
+static void hard_test(){
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
     }
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}*/
+}
 
 static void os_init() {
     pmm->init();
     kmt->init();
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
-    dev->init();
-    /*kmt->sem_init(&empty, "empty", N);
+    //dev->init();
+    kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
-    hard_test();*/
+    hard_test();
     //while(1);
 }
 
