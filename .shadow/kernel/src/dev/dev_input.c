@@ -28,7 +28,7 @@ static void push_event(input_t *in, struct input_event ev) {
 
 static struct input_event pop_event(input_t *in) {
   printf("pop event\n");
-  kmt->sem_wait(&in->event_sem);
+  kmt->sem_wait(&in->event_sem);//tty task waiting here
   printf("popp event\n");
   kmt->spin_lock(&in->lock);
   printf("popp event\n");
@@ -205,7 +205,7 @@ void dev_input_task(void *args) {
     }
     printf("wait\n");
     assert(ienabled());
-    kmt->sem_wait(&sem_kbdirq);
+    kmt->sem_wait(&sem_kbdirq);//input task waiting here
     printf("back\n");
   }
 }
