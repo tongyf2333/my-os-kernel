@@ -86,6 +86,7 @@ static void input_keydown(device_t *dev, AM_INPUT_KEYBRD_T key) {
 }
 
 static Context *input_notify(Event ev, Context *context) {
+  printf("inside\n");
   kmt->sem_signal(&sem_kbdirq);
   return NULL;
 }
@@ -185,16 +186,20 @@ void dev_input_task(void *args) {
   uint32_t known_time = io_read(AM_TIMER_UPTIME).us;
 
   while (1) {
+    printf("QAQ\n");
     uint32_t time;
     AM_INPUT_KEYBRD_T key;
     while ((key = io_read(AM_INPUT_KEYBRD)).keycode != 0) {
+      printf("QWQ\n");
       input_keydown(in, key);
     }
+    printf("QQQ\n");
     time = io_read(AM_TIMER_UPTIME).us;
     if ((time - known_time) / 1000 > 100 && is_empty(in->ptr)) {
       push_event(in->ptr, event(0, 0, 0));
       known_time = time;
     }
     kmt->sem_wait(&sem_kbdirq);
+    printf("back\n");
   }
 }

@@ -62,7 +62,8 @@ void merge(int l,int r){
 static Context *kmt_context_save(Event ev, Context *ctx){
     if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
     else current_task[cpu_current()]->context = ctx;
-    return current_task[cpu_current()]->context;
+    //return current_task[cpu_current()]->context;
+    return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     assert(task_check());
@@ -77,15 +78,18 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     return current_task[cpu_current()]->context;
 }
 static Context *os_trap(Event ev, Context *ctx){
+    printf("VVV\n");
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
+        if(ev.event==EVENT_IRQ_IODEV) printf("XXX\n");
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
+            panic_on(r && next, "returning multiple contexts");
             if (r) next = r;
         }
     }
-    panic_on(!next, "return to NULL context");//bang!!!
+    panic_on(!next, "return to NULL context");
     return next;
 }
 
