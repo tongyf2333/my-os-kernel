@@ -68,14 +68,14 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-static void hard_test(){
+/*static void hard_test(){
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
     }
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}
+}*/
 
 static void os_init() {
     pmm->init();
