@@ -102,6 +102,7 @@ static void kmt_sem_wait(sem_t *sem){
     if (sem->count<=0) {
         enqueue(sem->que, current_task[cpu_current()]);
         current_task[cpu_current()]->status = BLOCKED;
+        current_task[cpu_current()]->cpu_id=-1;
     } else {
         sem->count++;
         acquired = 1;
