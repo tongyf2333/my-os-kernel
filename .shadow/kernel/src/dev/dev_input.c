@@ -199,6 +199,7 @@ void dev_input_task(void *args) {
       push_event(in->ptr, event(0, 0, 0));
       known_time = time;
     }
+    printf("wait\n");
     kmt->sem_wait(&sem_kbdirq);
     printf("back\n");
   }
