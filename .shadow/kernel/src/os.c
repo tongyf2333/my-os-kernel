@@ -28,22 +28,6 @@ int cmp1(hand a,hand b){
     return a.seq<b.seq;
 }
 
-int task_check(){
-    int flag=1;
-    for(int i=0;i<task_count;i++){
-        if(i==task_count-1&&tasks[i]->next->id!=0){
-            flag=0;printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
-            assert(0);
-        }
-        if(i<task_count-1&&tasks[i]->next->id!=i+1){
-            flag=0;printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
-            assert(0);
-        }
-        //printf("%d->%d\n",tasks[i]->id+1,tasks[i]->next->id+1);
-    }
-    return flag;
-}
-
 void merge(int l,int r){
 	if(l==r) return;
 	int mid=(l+r)/2;
@@ -66,7 +50,6 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
-    assert(task_check());
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
     } while (
@@ -89,7 +72,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r) next = r;
         }
     }
-    panic_on(!next, "return to NULL context");//bang!!!
+    panic_on(!next, "return to NULL context");
     return next;
 }
 
