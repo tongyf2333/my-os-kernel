@@ -62,7 +62,8 @@ void merge(int l,int r){
 static Context *kmt_context_save(Event ev, Context *ctx){
     if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
     else current_task[cpu_current()]->context = ctx;
-    return current_task[cpu_current()]->context;
+    //return current_task[cpu_current()]->context;
+    return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     assert(task_check());
