@@ -276,13 +276,12 @@ void dev_tty_task(void *arg) {
   uint64_t known_time = io_read(AM_TIMER_UPTIME).us;
 
   while (1) {
-    printf("kernel\n");
     struct input_event ev;
     int nread = in->ops->read(in, 0, &ev, sizeof(ev));
     panic_on(nread == 0, "unknown error");
 
     tty_t *tty = ttydev->ptr;
-    printf("kernle\n");
+
     if (ev.alt) {
       device_t *next = ttydev;
       if (ev.data == '1') next = dev->lookup("tty1");
@@ -308,7 +307,7 @@ void dev_tty_task(void *arg) {
       if (tty_cook(tty, ch) == 0)
         ttydev->ops->write(ttydev, 0, &ch, 1);
     }
-    printf("fuck\n");
+
     uint64_t now = io_read(AM_TIMER_UPTIME).us;
     bool changed = (ev.data != 0);
     if (changed || (now - known_time) / 1000 > 500) {
