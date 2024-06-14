@@ -179,7 +179,7 @@ static void kmt_init(){
     kmt_spin_init(&lock,"null");
     task_count=0;
     for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
-    kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
+    //kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
 }
