@@ -30,6 +30,7 @@ static struct input_event pop_event(input_t *in) {
   printf("pop event\n");
   kmt->sem_wait(&in->event_sem);
   kmt->spin_lock(&in->lock);
+  printf("popp event\n");
   panic_on(is_empty(in), "input queue empty");
   int idx = in->front;
   in->front = (in->front + 1) % NEVENTS;
