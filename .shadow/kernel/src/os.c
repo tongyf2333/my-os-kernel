@@ -49,7 +49,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     //return current_task[cpu_current()]->context;
     return NULL;
 }
-static Context *kmt_schedule(Event ev, Context *ctx){
+static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
         printf("scheduling\n");
