@@ -29,7 +29,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     current_task[cpu_current()]->cpu_id=cpu_current();
     return current_task[cpu_current()]->context;
 }
-/*
+
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
@@ -42,7 +42,7 @@ static task_t *dequeue(queue_t *q){
     q->cnt--;
     return res;
 }
-*/
+
 static struct cpu *mycpu(){
     return &cpus[cpu_current()];
 }
@@ -114,32 +114,34 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    /*int acquired=0;
+    int acquired=0;
     kmt_spin_lock(sem->lk);
     if (sem->count<=0) {
-        enqueue(sem->que, current_task[cpu_current()]);
         current_task[cpu_current()]->status = BLOCKED;
-    } else {
+        enqueue(sem->que, current_task[cpu_current()]);
+        
+    } 
+    else {
         sem->count--;
         acquired = 1;
     }
     kmt_spin_unlock(sem->lk);
-    if (!acquired) yield();*/
-    kmt_spin_lock(sem->lk);
-    while(sem->count<=0){
-        kmt_spin_unlock(sem->lk);
-        yield();
-    }
+    if (!acquired) yield();
+    /*kmt_spin_lock(sem->lk);
     sem->count--;
-    kmt_spin_unlock(sem->lk);
+    if(sem->count<0){
+        enqueue(sem->que, current_task[cpu_current()]);
+        current_task[cpu_current()]->status = BLOCKED;
+    }
+    kmt_spin_unlock(sem->lk);*/
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
-    /*if((sem->que->cnt)>0) {
+    if((sem->que->cnt)>0) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
-    else */sem->count++;
+    else sem->count++;
     kmt_spin_unlock(sem->lk);
 }
 
