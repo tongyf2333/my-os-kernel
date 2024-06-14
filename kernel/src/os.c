@@ -18,9 +18,18 @@ typedef struct hand{
 
 hand table[1024],temp[1024];
 int cnt=0,sum=0;
+spinlock_t lkk;
 
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
+
+void solve(void *arg){
+    while(1){
+        kmt->spin_lock(&lkk);
+        putch('X');
+        kmt->spin_unlock(&lkk);
+    }
+}
 
 void solver(void *arg){while(1);}
 
@@ -57,6 +66,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r) next = r;
         }
     }
+    if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
     return next;
 }
@@ -68,23 +78,30 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-/*static void hard_test(){
+static void hard_test(){
+    kmt->sem_init(&empty, "empty", N);
+    kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
         kmt->create(task_alloc(), "producer", Tproduce, NULL);
     }
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
+}
+
+/*static void easy_test(){
+    kmt->spin_init(&lkk,"lkk");
+    for(int i=0;i<2;i++)
+        kmt->create(task_alloc(),"solve",solve,NULL);
 }*/
 
 static void os_init() {
     pmm->init();
     kmt->init();
-    dev->init();
+    //dev->init();
 
-    /*kmt->sem_init(&empty, "empty", N);
-    kmt->sem_init(&fill,  "fill",  0);
-    hard_test();*/
+    //easy_test();
+    hard_test();
 }
 
 static void os_run() {

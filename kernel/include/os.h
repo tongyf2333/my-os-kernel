@@ -3,8 +3,8 @@
 #define RUNNING 1
 #define RUNNABLE 0
 #define DEAD 3
-#define QUESIZ 256
-#define STACK_SIZE 8192
+#define QUESIZ 1024
+#define STACK_SIZE 32768
 
 struct cpu {
     int noff;

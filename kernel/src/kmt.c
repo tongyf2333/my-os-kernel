@@ -15,13 +15,14 @@ spinlock_t lock;
 extern void solver();
 
 static Context *kmt_context_save(Event ev, Context *ctx){
-    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[0];
+    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[cpu_current()];
     else current_task[cpu_current()]->context = ctx;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     do {
         current_task[cpu_current()] = current_task[cpu_current()]->next;
+        //printf("<%d %d %d>",current_task[cpu_current()]->id+1,current_task[cpu_current()]->status+1,current_task[cpu_current()]->cpu_id+1);
     } while (
         current_task[cpu_current()]->status != RUNNING ||
         ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
@@ -48,7 +49,7 @@ static struct cpu *mycpu(){
 }
 
 bool holding(spinlock_t *lk) {
-    //assert(!ienabled());
+    assert(!ienabled());
     return (
         lk->locked == LOCKED &&
         lk->cpu == mycpu()
@@ -63,13 +64,13 @@ void push_off(void) {
 }
 
 void pop_off(void) {
-    struct cpu *c = mycpu();
+    //struct cpu *c = mycpu();
     if(ienabled())
         panic("pop_off - interruptible");
-    if(c->noff < 1)
+    if(mycpu()->noff < 1)
         panic("pop_off");
-    c->noff -= 1;
-    if(c->noff == 0 && c->intena)
+    mycpu()->noff -= 1;
+    if(mycpu()->noff == 0 && mycpu()->intena)
         iset(true);
 }
 
@@ -96,7 +97,9 @@ static void kmt_spin_lock(spinlock_t *lk){
 }
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
+        printf("release:%s\n",lk->name);
         panic("double release");//bang!
+        assert(0);
     }
     lk->cpu = NULL;
     atomic_xchg(&lk->locked, UNLOCKED);
@@ -112,25 +115,47 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    int acquired=0;
+    /*int acquired=0;
     kmt_spin_lock(sem->lk);
     if (sem->count<=0) {
-        enqueue(sem->que, current_task[cpu_current()]);
         current_task[cpu_current()]->status = BLOCKED;
-    } else {
+        enqueue(sem->que, current_task[cpu_current()]);
+        
+    } 
+    else {
         sem->count--;
         acquired = 1;
     }
     kmt_spin_unlock(sem->lk);
-    if (!acquired) yield();
+    if (!acquired) yield();*/
+    kmt_spin_lock(sem->lk);
+    sem->count--;
+    if(sem->count<0){
+        task_t *now=current_task[cpu_current()];
+        now->status = BLOCKED;
+        enqueue(sem->que, now);
+        while(now->status==BLOCKED){
+            kmt_spin_unlock(sem->lk);
+            yield();
+            kmt_spin_lock(sem->lk);
+        }
+    }
+    kmt_spin_unlock(sem->lk);
 }
 static void kmt_sem_signal(sem_t *sem){
-    kmt_spin_lock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
     if((sem->que->cnt)>0) {
         task_t *task = dequeue(sem->que);
         task->status = RUNNING;
     } 
     else sem->count++;
+    kmt_spin_unlock(sem->lk);*/
+    kmt_spin_lock(sem->lk);
+    sem->count++;
+    if(sem->count<=0){
+        task_t *now=dequeue(sem->que);
+        if(now) now->status=RUNNING;
+    }
     kmt_spin_unlock(sem->lk);
 }
 
@@ -139,8 +164,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
-    task->cpu_id=-1;
-    assert((intptr_t)(&task->stack)==(intptr_t)(task->stack));
+    task->cpu_id=task_count%cpu_count();
     task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->id=task_count;
     tasks[task_count]=task;
