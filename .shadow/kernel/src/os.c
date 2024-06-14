@@ -83,6 +83,7 @@ static Context *os_trap(Event ev, Context *ctx){
         hand h=table[i];
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
+            panic_on(r && next, "returning multiple contexts");
             if (r) next = r;
         }
     }
