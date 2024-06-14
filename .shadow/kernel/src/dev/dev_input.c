@@ -185,6 +185,7 @@ void dev_input_task(void *args) {
   uint32_t known_time = io_read(AM_TIMER_UPTIME).us;
 
   while (1) {
+    printf("QAQ\n");
     uint32_t time;
     AM_INPUT_KEYBRD_T key;
     while ((key = io_read(AM_INPUT_KEYBRD)).keycode != 0) {
