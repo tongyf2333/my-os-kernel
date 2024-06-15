@@ -146,6 +146,7 @@ static void kmt_sem_wait(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count--;
     if(sem->count<0){
+        printf("QWQ\n");
         task_t *now=current_task[cpu_current()];
         now->status = BLOCKED;
         enqueue(sem->que, now);
