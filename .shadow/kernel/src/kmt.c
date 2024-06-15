@@ -60,7 +60,6 @@ void pop_off(void) {
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
     if (holding(lk)){
-        //assert(strcmp("lock",lk->name)==0);
         panic("deadlock!");
     }
     int got;
@@ -72,7 +71,6 @@ static void kmt_spin_lock(spinlock_t *lk){
 
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
-        //assert(strcmp("lock",lk->name)==0);
         panic("double release");
     }
     lk->cpu = NULL;
@@ -83,6 +81,10 @@ static void kmt_spin_unlock(spinlock_t *lk){
 static Context *kmt_context_save(Event ev, Context *ctx){
     if (current_task[cpu_current()]==NULL){
         kmt_spin_lock(&lock);
+        while(global.cnt<=0){
+            kmt_spin_unlock(&lock);
+            kmt_spin_lock(&lock);
+        }
         current_task[cpu_current()] = dequeue(&global);
         kmt_spin_unlock(&lock);
     }
