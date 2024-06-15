@@ -69,6 +69,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     }while (got != UNLOCKED);
     lk->cpu=mycpu();
 }
+
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
         printf("release:%s\n",lk->name);
@@ -187,7 +188,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
 }
 
 static void kmt_init(){
-    kmt_spin_init(&lock,"null");
+    kmt_spin_init(&lock,"lock");
     kmt_spin_init(&que,"que");
     task_count=0;
     for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
