@@ -31,7 +31,7 @@ void solve(void *arg){
     }
 }
 
-void solver(void *arg){while(1);}
+void solver(void *arg){while(1){yield();}}
 
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
