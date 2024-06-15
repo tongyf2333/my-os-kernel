@@ -60,7 +60,7 @@ void pop_off(void) {
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
     if (holding(lk)){
-        assert(strcmp("lock",lk->name)==0);
+        assert(strcmp("lock",lk->name)!=0);
         panic("deadlock!");
     }
     int got;
@@ -72,7 +72,7 @@ static void kmt_spin_lock(spinlock_t *lk){
 
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
-        assert(strcmp("lock",lk->name)==0);
+        assert(strcmp("lock",lk->name)!=0);
         panic("double release");//bang!
         assert(0);
     }
