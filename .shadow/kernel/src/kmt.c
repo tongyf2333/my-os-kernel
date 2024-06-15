@@ -133,19 +133,20 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    /*int acquired=0;
+    int acquired=0;
     kmt_spin_lock(sem->lk);
     if (sem->count<=0) {
-        current_task[cpu_current()]->status = BLOCKED;
-        enqueue(sem->que, current_task[cpu_current()]);
+        task_t *now=current_task[cpu_current()];
+        now->status = BLOCKED;
+        enqueue(sem->que, now);
     } 
     else {
         sem->count--;
         acquired = 1;
     }
     kmt_spin_unlock(sem->lk);
-    if (!acquired) yield();*/
-    kmt_spin_lock(sem->lk);
+    if (!acquired) yield();
+    /*kmt_spin_lock(sem->lk);
     sem->count--;
     if(sem->count<0){
         //printf("QWQ\n");
@@ -158,17 +159,20 @@ static void kmt_sem_wait(sem_t *sem){
             kmt_spin_lock(sem->lk);
         }
     }
-    kmt_spin_unlock(sem->lk);
+    kmt_spin_unlock(sem->lk);*/
 }
 static void kmt_sem_signal(sem_t *sem){
-    /*kmt_spin_lock(sem->lk);
-    if((sem->que->cnt)>0) {
-        task_t *task = dequeue(sem->que);
-        task->status = RUNNING;
-    } 
-    else sem->count++;
-    kmt_spin_unlock(sem->lk);*/
     kmt_spin_lock(sem->lk);
+    if(sem->que->cnt>0){
+        task_t *now=dequeue(sem->que);
+        now->status=RUNNING;
+        kmt_spin_lock(&lock);
+        enqueue(global,now);
+        kmt_spin_unlock(&lock);
+    }
+    else sem->count++;
+    kmt_spin_unlock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
     sem->count++;
     if(sem->count<=0){
         //printf("QAQ\n");
@@ -180,7 +184,7 @@ static void kmt_sem_signal(sem_t *sem){
             kmt_spin_unlock(&lock);
         }
     }
-    kmt_spin_unlock(sem->lk);
+    kmt_spin_unlock(sem->lk);*/
 }
 
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
