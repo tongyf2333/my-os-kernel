@@ -193,6 +193,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->id=task_count;
     tasks[task_count]=task;
     task_count++;
+    assert(task->context!=NULL);
     enqueue(global,task);
     kmt_spin_unlock(&lock);
     return 0;
