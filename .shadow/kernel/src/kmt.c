@@ -19,6 +19,7 @@ static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
     q->cnt++;
+    printf("%d\n",q->tl+1);
     assert(q->element[q->tl]->context!=NULL);
 }
 
