@@ -105,7 +105,6 @@ static void os_init() {
 }
 
 static void os_run() {
-    //hard_test();
     iset(true);
     yield();
     assert(0);
