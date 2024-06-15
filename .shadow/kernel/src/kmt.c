@@ -92,10 +92,12 @@ static Context *kmt_context_save(Event ev, Context *ctx){
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     kmt_spin_lock(&lock);
-    while(global.cnt<=0);
+    while(global.cnt<=0){
+        kmt_spin_unlock(&lock);
+        kmt_spin_lock(&lock);
+    }
     current_task[cpu_current()] = dequeue(&global);
     kmt_spin_unlock(&lock);
-    current_task[cpu_current()]->cpu_id=cpu_current();
     return current_task[cpu_current()]->context;
 }
 
@@ -176,13 +178,10 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
-    task->cpu_id=task_count%cpu_count();
     task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->id=task_count;
     tasks[task_count]=task;
     task_count++;
-    task->next=tasks[0];
-    if(task_count!=1) tasks[task_count-2]->next=task;
     enqueue(&global,task);
     kmt_spin_unlock(&lock);
     return 0;
