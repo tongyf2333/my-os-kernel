@@ -21,6 +21,7 @@ typedef struct queue{
 
 struct spinlock{
     int locked;
+    int status;
     const char *name;
     struct cpu *cpu;  
 };
