@@ -58,7 +58,7 @@ void pop_off(void) {
 }
 
 static void kmt_spin_lock(spinlock_t *lk){
-    push_off();
+    
     if (holding(lk)){
         printf("%s\n",lk->name);
         panic("deadlock!");
@@ -67,6 +67,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
+    push_off();
     lk->cpu=mycpu();
 }
 
