@@ -10,7 +10,7 @@ struct task *tasks[128];
 struct task *current_task[16];
 int task_count=0;
 
-spinlock_t lock,que;
+spinlock_t lock;
 queue_t global;
 
 extern void solver();
@@ -83,18 +83,18 @@ static void kmt_spin_unlock(spinlock_t *lk){
 
 static Context *kmt_context_save(Event ev, Context *ctx){
     if(ev.event!=EVENT_YIELD){
-        kmt_spin_lock(&que);
+        kmt_spin_lock(&lock);
         enqueue(&global,current_task[cpu_current()]);
-        kmt_spin_unlock(&que);
+        kmt_spin_unlock(&lock);
     }
     if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[cpu_current()];
     else current_task[cpu_current()]->context = ctx;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
-    kmt_spin_lock(&que);
+    kmt_spin_lock(&lock);
     current_task[cpu_current()] = dequeue(&global);
-    kmt_spin_unlock(&que);
+    kmt_spin_unlock(&lock);
     current_task[cpu_current()]->cpu_id=cpu_current();
     return current_task[cpu_current()]->context;
 }
@@ -160,9 +160,9 @@ static void kmt_sem_signal(sem_t *sem){
     if(sem->count<=0){
         task_t *now=dequeue(sem->que);
         if(now){
-            kmt_spin_lock(&que);
+            kmt_spin_lock(&lock);
             now->status=RUNNING,enqueue(&global,now);
-            kmt_spin_unlock(&que);
+            kmt_spin_unlock(&lock);
         }
     }
     kmt_spin_unlock(sem->lk);
@@ -180,16 +180,13 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task_count++;
     task->next=tasks[0];
     if(task_count!=1) tasks[task_count-2]->next=task;
-    kmt_spin_lock(&que);
     enqueue(&global,task);
-    kmt_spin_unlock(&que);
     kmt_spin_unlock(&lock);
     return 0;
 }
 
 static void kmt_init(){
     kmt_spin_init(&lock,"lock");
-    kmt_spin_init(&que,"que");
     task_count=0;
     for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
     kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
