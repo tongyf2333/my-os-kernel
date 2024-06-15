@@ -7,7 +7,7 @@
 struct cpu cpus[64];
 
 struct task *tasks[128];
-struct task *current_task[16];
+struct task *current_task[64];
 int task_count=0;
 
 spinlock_t lock;
