@@ -168,6 +168,7 @@ static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count++;
     if(sem->count<=0){
+        printf("QAQ\n");
         if(sem->que->cnt>0){
             task_t *now=dequeue(sem->que);
             now->status=RUNNING;
