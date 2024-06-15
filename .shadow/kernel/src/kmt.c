@@ -19,14 +19,14 @@ static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
     q->cnt++;
-    printf("%d\n",q->tl+1);
+    //printf("%d\n",q->tl+1);
     assert(q->element[q->tl]->context!=NULL);
 }
 
 static task_t *dequeue(queue_t *q){
     assert(q->cnt>0);
     task_t *res=q->element[q->hd];
-    printf("%d\n",q->hd+1);
+    //printf("%d\n",q->hd+1);
     assert(res->context!=NULL);
     q->hd=((q->hd)+1)%QUESIZ;
     q->cnt--;
@@ -206,6 +206,9 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
 
 static void kmt_init(){
     global=pmm->alloc(sizeof(queue_t));
+    global->cnt=0;
+    global->hd=0;
+    global->tl=-1;
     kmt_spin_init(&lock,"lock");
     task_count=0;
     for(int i=0;i<cpu_count();i++) cpus[i].noff=0,current_task[i]=NULL;
