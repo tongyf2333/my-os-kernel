@@ -60,6 +60,7 @@ void pop_off(void) {
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
     if (holding(lk)){
+        printf("%s\n",lk->name);
         panic("deadlock!");
     }
     int got;
@@ -71,6 +72,7 @@ static void kmt_spin_lock(spinlock_t *lk){
 
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
+        printf("%s\n",lk->name);
         panic("double release");
     }
     lk->cpu = NULL;
