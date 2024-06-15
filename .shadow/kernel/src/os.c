@@ -23,15 +23,7 @@ spinlock_t lkk;
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 
-void solve(void *arg){
-    while(1){
-        kmt->spin_lock(&lkk);
-        putch('X');
-        kmt->spin_unlock(&lkk);
-    }
-}
-
-void solver(void *arg){while(1){yield();}}
+void solver(void *arg){while(1){putch('X');}}
 
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
