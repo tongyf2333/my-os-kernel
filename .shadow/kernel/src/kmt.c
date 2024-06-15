@@ -86,6 +86,8 @@ static Context *kmt_context_save(Event ev, Context *ctx){
             kmt_spin_lock(&lock);
         }
         current_task[cpu_current()] = dequeue(global);
+        assert(current_task[cpu_current()]!=NULL);
+        assert(current_task[cpu_current()]->context!=NULL);
         kmt_spin_unlock(&lock);
     }
     else current_task[cpu_current()]->context = ctx;
