@@ -88,13 +88,11 @@ static Context *kmt_context_save(Event ev, Context *ctx){
             kmt_spin_lock(&lock);
         }
         current_task[cpu_current()] = dequeue(global);
-        assert(current_task[cpu_current()]!=NULL);
-        assert(current_task[cpu_current()]->context!=NULL);
         kmt_spin_unlock(&lock);
     }
     else{
         current_task[cpu_current()]->context = ctx;
-        current_task[cpu_current()]->state=cpus[cpu_current()];
+        //current_task[cpu_current()]->state=cpus[cpu_current()];
     }
     if(ev.event!=EVENT_YIELD){
         kmt_spin_lock(&lock);
@@ -110,7 +108,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){//bug here
         kmt_spin_lock(&lock);
     }
     current_task[cpu_current()] = dequeue(global);
-    cpus[cpu_current()]=current_task[cpu_current()]->state;
+    //cpus[cpu_current()]=current_task[cpu_current()]->state;
     kmt_spin_unlock(&lock);
     printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
