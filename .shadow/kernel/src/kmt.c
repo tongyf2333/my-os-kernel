@@ -11,7 +11,7 @@ struct task *current_task[16];
 int task_count=0;
 
 spinlock_t lock;
-queue_t global;
+queue_t *global;
 
 extern void solver();
 
@@ -81,29 +81,29 @@ static void kmt_spin_unlock(spinlock_t *lk){
 static Context *kmt_context_save(Event ev, Context *ctx){
     if (current_task[cpu_current()]==NULL){
         kmt_spin_lock(&lock);
-        while(global.cnt<=0){
+        while(global->cnt<=0){
             kmt_spin_unlock(&lock);
             kmt_spin_lock(&lock);
         }
-        current_task[cpu_current()] = dequeue(&global);
+        current_task[cpu_current()] = dequeue(global);
         kmt_spin_unlock(&lock);
     }
     else current_task[cpu_current()]->context = ctx;
     if(ev.event!=EVENT_YIELD){
         kmt_spin_lock(&lock);
-        enqueue(&global,current_task[cpu_current()]);
+        enqueue(global,current_task[cpu_current()]);
         kmt_spin_unlock(&lock);
     }
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     kmt_spin_lock(&lock);
-    while(global.cnt<=0){
+    while(global->cnt<=0){
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
     }
-    assert(global.cnt>0);
-    current_task[cpu_current()] = dequeue(&global);
+    assert(global->cnt>0);
+    current_task[cpu_current()] = dequeue(global);
     assert(current_task[cpu_current()]!=NULL);
     kmt_spin_unlock(&lock);
     //printf("%d",current_task[cpu_current()]->id+1);
@@ -175,7 +175,7 @@ static void kmt_sem_signal(sem_t *sem){
             task_t *now=dequeue(sem->que);
             now->status=RUNNING;
             kmt_spin_lock(&lock);
-            enqueue(&global,now);
+            enqueue(global,now);
             kmt_spin_unlock(&lock);
         }
     }
@@ -191,12 +191,13 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->id=task_count;
     tasks[task_count]=task;
     task_count++;
-    enqueue(&global,task);
+    enqueue(global,task);
     kmt_spin_unlock(&lock);
     return 0;
 }
 
 static void kmt_init(){
+    global=pmm->alloc(sizeof(queue_t));
     kmt_spin_init(&lock,"lock");
     task_count=0;
     for(int i=0;i<cpu_count();i++) cpus[i].noff=0,current_task[i]=NULL;
