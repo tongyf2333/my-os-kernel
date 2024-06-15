@@ -19,15 +19,10 @@ static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
     q->cnt++;
-    //printf("%d\n",q->tl+1);
-    assert(q->element[q->tl]->context!=NULL);
 }
 
 static task_t *dequeue(queue_t *q){
-    assert(q->cnt>0);
     task_t *res=q->element[q->hd];
-    //printf("%d\n",q->hd+1);
-    assert(res->context!=NULL);
     q->hd=((q->hd)+1)%QUESIZ;
     q->cnt--;
     return res;
@@ -109,10 +104,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){//bug here
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
     }
-    assert(global->cnt>0);
     current_task[cpu_current()] = dequeue(global);
-    assert(current_task[cpu_current()]!=NULL);
-    assert(current_task[cpu_current()]->context!=NULL);
     kmt_spin_unlock(&lock);
     //printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
@@ -198,7 +190,6 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->id=task_count;
     tasks[task_count]=task;
     task_count++;
-    assert(task->context!=NULL);
     enqueue(global,task);
     kmt_spin_unlock(&lock);
     return 0;
