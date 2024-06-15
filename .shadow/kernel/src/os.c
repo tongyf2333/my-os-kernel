@@ -25,7 +25,7 @@ spinlock_t lkk;
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); printf(" produce on cpu%d ",cpu_current()+1); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); printf(" consume on cpu%d ",cpu_current()+1); V(&empty); } }
 
-void solver(void *arg){while(1){enqueue(global,current_task[cpu_current()]);yield();}}
+void solver(void *arg){while(1){ printf(" solve on cpu%d ",cpu_current()+1); enqueue(global,current_task[cpu_current()]);yield();}}
 
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
