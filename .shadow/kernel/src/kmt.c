@@ -10,26 +10,10 @@ struct task *tasks[128];
 struct task *current_task[16];
 int task_count=0;
 
-spinlock_t lock;
+spinlock_t lock,que;
+queue_t global;
 
 extern void solver();
-
-static Context *kmt_context_save(Event ev, Context *ctx){
-    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[cpu_current()];
-    else current_task[cpu_current()]->context = ctx;
-    return NULL;
-}
-static Context *kmt_schedule(Event ev, Context *ctx){//bug here
-    do {
-        current_task[cpu_current()] = current_task[cpu_current()]->next;
-        //printf("<%d %d %d>",current_task[cpu_current()]->id+1,current_task[cpu_current()]->status+1,current_task[cpu_current()]->cpu_id+1);
-    } while (
-        current_task[cpu_current()]->status != RUNNING ||
-        ((current_task[cpu_current()]->cpu_id!=-1)&&(current_task[cpu_current()]->cpu_id!=cpu_current()))
-    );
-    current_task[cpu_current()]->cpu_id=cpu_current();
-    return current_task[cpu_current()]->context;
-}
 
 static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
@@ -74,16 +58,6 @@ void pop_off(void) {
         iset(true);
 }
 
-static void kmt_teardown(task_t *task){
-    pmm->free(task->context);
-    task->status=DEAD;
-}
-
-static void kmt_spin_init(spinlock_t *lk, const char *name){
-    lk->name=name;
-    lk->locked=UNLOCKED;
-    lk->cpu=NULL;
-}
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
     if (holding(lk)){
@@ -105,6 +79,36 @@ static void kmt_spin_unlock(spinlock_t *lk){
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
 }
+
+static Context *kmt_context_save(Event ev, Context *ctx){
+    if(ev.event!=EVENT_YIELD){
+        kmt_spin_lock(&que);
+        enqueue(&global,current_task[cpu_current()]);
+        kmt_spin_unlock(&que);
+    }
+    if (current_task[cpu_current()]==NULL) current_task[cpu_current()] = tasks[cpu_current()];
+    else current_task[cpu_current()]->context = ctx;
+    return NULL;
+}
+static Context *kmt_schedule(Event ev, Context *ctx){//bug here
+    kmt_spin_lock(&que);
+    current_task[cpu_current()] = dequeue(&global);
+    kmt_spin_unlock(&que);
+    current_task[cpu_current()]->cpu_id=cpu_current();
+    return current_task[cpu_current()]->context;
+}
+
+static void kmt_teardown(task_t *task){
+    pmm->free(task->context);
+    task->status=DEAD;
+}
+
+static void kmt_spin_init(spinlock_t *lk, const char *name){
+    lk->name=name;
+    lk->locked=UNLOCKED;
+    lk->cpu=NULL;
+}
+
 static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->lk=pmm->alloc(sizeof(spinlock_t));
     kmt_spin_init(sem->lk,name);
@@ -154,7 +158,11 @@ static void kmt_sem_signal(sem_t *sem){
     sem->count++;
     if(sem->count<=0){
         task_t *now=dequeue(sem->que);
-        if(now) now->status=RUNNING;
+        if(now){
+            kmt_spin_lock(&que);
+            now->status=RUNNING,enqueue(&global,now);
+            kmt_spin_unlock(&que);
+        }
     }
     kmt_spin_unlock(sem->lk);
 }
@@ -171,12 +179,16 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task_count++;
     task->next=tasks[0];
     if(task_count!=1) tasks[task_count-2]->next=task;
+    kmt_spin_lock(&que);
+    enqueue(&global,task);
+    kmt_spin_unlock(&que);
     kmt_spin_unlock(&lock);
     return 0;
 }
 
 static void kmt_init(){
     kmt_spin_init(&lock,"null");
+    kmt_spin_init(&que,"que");
     task_count=0;
     for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
     kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
