@@ -105,7 +105,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     current_task[cpu_current()] = dequeue(&global);
     kmt_spin_unlock(&lock);
     //assert(current_task[cpu_current()]!=NULL);
-    printf("%d",current_task[cpu_current()]->id+1);
+    //printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
 }
 
@@ -146,7 +146,7 @@ static void kmt_sem_wait(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count--;
     if(sem->count<0){
-        printf("QWQ\n");
+        //printf("QWQ\n");
         task_t *now=current_task[cpu_current()];
         now->status = BLOCKED;
         enqueue(sem->que, now);
@@ -169,7 +169,7 @@ static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count++;
     if(sem->count<=0){
-        printf("QAQ\n");
+        //printf("QAQ\n");
         if(sem->que->cnt>0){
             task_t *now=dequeue(sem->que);
             now->status=RUNNING;
