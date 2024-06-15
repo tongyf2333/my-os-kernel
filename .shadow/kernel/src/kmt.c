@@ -81,6 +81,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 
 static Context *kmt_context_save(Event ev, Context *ctx){
+    printf("%d",ev.event+1);
     if (current_task[cpu_current()]==NULL){
         kmt_spin_lock(&lock);
         current_task[cpu_current()] = dequeue(&global);
