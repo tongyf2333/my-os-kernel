@@ -25,7 +25,7 @@ static void enqueue(queue_t *q,task_t *elem){
 static task_t *dequeue(queue_t *q){
     assert(q->cnt>0);
     task_t *res=q->element[q->hd];
-    printf("%d\n",q->hd);
+    printf("%d\n",q->hd+1);
     assert(res->context!=NULL);
     q->hd=((q->hd)+1)%QUESIZ;
     q->cnt--;
