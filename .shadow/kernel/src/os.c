@@ -4,9 +4,9 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 1
-#define NPROD 1
-#define NCONS 1
+#define N 5
+#define NPROD 2
+#define NCONS 2
 
 extern task_t *tasks[],*current_task[];
 extern int task_count;
@@ -51,7 +51,6 @@ void merge(int l,int r){
 }
 
 static Context *os_trap(Event ev, Context *ctx){
-    iset(false);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -63,7 +62,6 @@ static Context *os_trap(Event ev, Context *ctx){
     }
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
-    iset(true);
     return next;
 }
 
