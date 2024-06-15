@@ -170,12 +170,10 @@ static void kmt_sem_signal(sem_t *sem){
     if(sem->count<=0){
         if(sem->que->cnt>0){
             task_t *now=dequeue(sem->que);
-            if(now){
-                now->status=RUNNING;
-                kmt_spin_lock(&lock);
-                enqueue(&global,now);
-                kmt_spin_unlock(&lock);
-            }
+            now->status=RUNNING;
+            kmt_spin_lock(&lock);
+            enqueue(&global,now);
+            kmt_spin_unlock(&lock);
         }
     }
     kmt_spin_unlock(sem->lk);
