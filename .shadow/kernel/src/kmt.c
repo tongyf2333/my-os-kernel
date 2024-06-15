@@ -93,6 +93,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     kmt_spin_lock(&lock);
+    while(global.cnt<=0);
     current_task[cpu_current()] = dequeue(&global);
     kmt_spin_unlock(&lock);
     current_task[cpu_current()]->cpu_id=cpu_current();
@@ -160,8 +161,9 @@ static void kmt_sem_signal(sem_t *sem){
     if(sem->count<=0){
         task_t *now=dequeue(sem->que);
         if(now){
+            now->status=RUNNING;
             kmt_spin_lock(&lock);
-            now->status=RUNNING,enqueue(&global,now);
+            enqueue(&global,now);
             kmt_spin_unlock(&lock);
         }
     }
