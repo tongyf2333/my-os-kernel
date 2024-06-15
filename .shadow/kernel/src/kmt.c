@@ -19,7 +19,7 @@ static void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
     q->cnt++;
-    assert(elem->context!=NULL);
+    assert(q->element[q->tl]->context!=NULL);
 }
 
 static task_t *dequeue(queue_t *q){
