@@ -32,6 +32,7 @@ struct semaphore{
 };
 
 struct task{
+    struct cpu state;
     int id;
     int status;
     const char *name;
