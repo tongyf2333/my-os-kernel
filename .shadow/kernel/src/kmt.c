@@ -104,7 +104,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     }
     assert(global->cnt>0);
     current_task[cpu_current()] = dequeue(global);
-    assert(current_task[cpu_current()]!=NULL);
+    assert(current_task[cpu_current()]->context!=NULL);
     kmt_spin_unlock(&lock);
     //printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
