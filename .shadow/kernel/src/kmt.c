@@ -4,7 +4,7 @@
 #define INT_MIN -2147483647
 #define INT_MAX 2147483647
 
-struct cpu cpus[16];
+struct cpu cpus[64];
 
 struct task *tasks[128];
 struct task *current_task[16];
@@ -48,7 +48,6 @@ void push_off(void) {
 }
 
 void pop_off(void) {
-    //struct cpu *c = mycpu();
     if(ienabled())
         panic("pop_off - interruptible");
     if(mycpu()->noff < 1)
@@ -159,12 +158,14 @@ static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count++;
     if(sem->count<=0){
-        task_t *now=dequeue(sem->que);
-        if(now){
-            now->status=RUNNING;
-            kmt_spin_lock(&lock);
-            enqueue(&global,now);
-            kmt_spin_unlock(&lock);
+        if(sem->que->cnt>0){
+            task_t *now=dequeue(sem->que);
+            if(now){
+                now->status=RUNNING;
+                kmt_spin_lock(&lock);
+                enqueue(&global,now);
+                kmt_spin_unlock(&lock);
+            }
         }
     }
     kmt_spin_unlock(sem->lk);
@@ -190,7 +191,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
 static void kmt_init(){
     kmt_spin_init(&lock,"lock");
     task_count=0;
-    for(int i=0;i<8;i++) cpus[i].noff=0,current_task[i]=NULL;
+    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,current_task[i]=NULL;
     kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
