@@ -122,7 +122,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         spinlk_lock(&lock);
     }
     current_task[cpu_current()] = dequeue(global);
-    //assert(current_task[cpu_current()]->context!=NULL);
+    assert(&(current_task[cpu_current()]->context)!=NULL);
     spinlk_unlock(&lock);
     return &(current_task[cpu_current()]->context);
 }
