@@ -112,7 +112,7 @@ static void kmt_teardown(task_t *task){
     task->status=DEAD;
 }
 static void kmt_spin_init(spinlock_t *lk, const char *name){
-    lk->name=name;
+    strcpy(lk->name,name);
     lk->locked=UNLOCKED;
     lk->id=-1;
 }

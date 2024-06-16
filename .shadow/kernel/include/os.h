@@ -22,7 +22,7 @@ typedef struct queue{
 struct spinlock{
     int locked;
     int status;
-    const char *name;
+    char name[128];
     int id;
 };
 
