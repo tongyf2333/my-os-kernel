@@ -78,6 +78,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     else start=current_task[cpu_current()]->id+1;
     printf("cnm\n");
     while(1){
+        printf("666\n");
         if(tasks[start]!=NULL){
             if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
         }
