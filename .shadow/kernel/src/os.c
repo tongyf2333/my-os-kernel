@@ -99,6 +99,7 @@ static void os_init() {
 
     easy_test();
     //hard_test();
+    printf("fuck\n");
 }
 
 static void os_run() {
