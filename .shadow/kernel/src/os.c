@@ -5,7 +5,7 @@ sem_t empty, fill;
 #define N 5
 #define NPROD 4
 #define NCONS 4
-extern task_t *tasks[],*current_task[];
+extern task_t *tasks[],*current_task[],*wait[];
 extern int task_count;
 typedef struct hand{
     int seq,event;
@@ -89,6 +89,7 @@ static void os_run() {
     iset(true);
     while(1){
         //printf(" main %d ",cpu_current()+1);
+        wait[cpu_current()]->status=RUNNABLE;
         assert(ienabled());
         yield();
     }
