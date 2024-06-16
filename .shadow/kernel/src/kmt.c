@@ -132,7 +132,6 @@ static void kmt_sem_signal(sem_t *sem){
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     assert(task!=NULL);
     kmt->spin_lock(&lock);
-    printf("XCV\n");
     task->entry=entry;
     strcpy(task->name,name);
     task->status=RUNNABLE;
@@ -146,6 +145,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
 static void kmt_init(){
     task_count=0;
     for(int i=0;i<cpu_count();i++) cpus[i].noff=0,cpus[i].intena=0;
+    for(int i=0;i<128;i++) tasks[i]=NULL;
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     kmt->spin_init(&lock,"lock");
