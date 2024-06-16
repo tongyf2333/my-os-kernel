@@ -73,6 +73,8 @@ void merge(int l,int r){
 
 static Context *os_trap(Event ev, Context *ctx){
     //printf("event:%d\n",ev.event+1);
+    int j=ienabled();
+    iset(false);
     assert(!ienabled());
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
@@ -83,6 +85,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r) next = r;
         }
     }
+    iset(j);
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
     //printf("finish\n");
