@@ -4,6 +4,8 @@
 #define INT_MIN -2147483647
 #define INT_MAX 2147483647
 
+typedef struct Context Context;
+
 struct cpu cpus[64];
 
 struct task *tasks[128];
@@ -111,11 +113,9 @@ static Context *kmt_context_save(Event ev, Context *ctx){
         enqueue(global,current_task[cpu_current()]);
         spinlk_unlock(&lock);
     }
-    //current_task[cpu_current()]->cpuid=cpu_current();
-    //current_task[cpu_current()]->state=cpus[cpu_current()];
     return NULL;
 }
-static Context *kmt_schedule(Event ev, Context *ctx){//bug here
+static Context *kmt_schedule(Event ev, Context *ctx){
     spinlk_lock(&lock);
     while(global->cnt<=0){
         spinlk_unlock(&lock);
@@ -123,9 +123,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){//bug here
     }
     current_task[cpu_current()] = dequeue(global);
     assert(current_task[cpu_current()]->context!=NULL);
-    //cpus[current_task[cpu_current()]->cpuid]=current_task[cpu_current()]->state;
     spinlk_unlock(&lock);
-    //printf("%d",current_task[cpu_current()]->id+1);
     return current_task[cpu_current()]->context;
 }
 
