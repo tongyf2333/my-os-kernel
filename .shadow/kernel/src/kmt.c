@@ -91,6 +91,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
         current_task[cpu_current()] = dequeue(global);
         printf("cnm\n");
         kmt_spin_unlock(&lock);
+        printf("aaa\n");
     }
     else{
         current_task[cpu_current()]->context = ctx;
