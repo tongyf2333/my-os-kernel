@@ -100,7 +100,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
     assert(&(current_task[cpu_current()]->context)!=NULL);
-    printf("%d\n",current_task[cpu_current()]->id+1);
+    //printf("%d\n",current_task[cpu_current()]->id+1);
     return &(current_task[cpu_current()]->context);
 }
 static void kmt_teardown(task_t *task){
