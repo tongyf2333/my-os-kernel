@@ -25,8 +25,26 @@ spinlock_t lkk;
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); /*printf(" produce on cpu%d ",cpu_current()+1);*/ V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); /*printf(" consume on cpu%d ",cpu_current()+1);*/ V(&empty); } }
 
-void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);enqueue(global,current_task[cpu_current()]);yield();}}
-void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);enqueue(global,current_task[cpu_current()]);yield();}}
+void solve1(void *arg){
+    while(1){
+        kmt->spin_lock(&lkk);
+        //putch('X');
+        printf("solve1 on cpu %d\n",cpu_current()+1);
+        kmt->spin_unlock(&lkk);
+        enqueue(global,current_task[cpu_current()]);
+        yield();
+    }
+}
+void solve2(void *arg){
+    while(1){
+        kmt->spin_lock(&lkk);
+        //putch('Y');
+        printf("solve2 on cpu %d\n",cpu_current()+1);
+        kmt->spin_unlock(&lkk);
+        enqueue(global,current_task[cpu_current()]);
+        yield();
+    }
+}
 
 void solver(void *arg){while(1){ /*printf(" solve on cpu%d ",cpu_current()+1);*/ enqueue(global,current_task[cpu_current()]);yield();}}
 
