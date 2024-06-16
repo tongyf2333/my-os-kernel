@@ -2,23 +2,26 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 1
+#define N 5
 #define NPROD 1
 #define NCONS 1
 extern task_t *tasks[],*current_task[];
 extern int task_count;
-extern queue_t *global;
-extern void enqueue(queue_t *q,task_t *elem);
 typedef struct hand{
     int seq,event;
     handler_t handler;
 }hand;
 hand table[1024],temp[1024];
-int cnt=0,sum=0;
+int cnt=0;
+extern spinlock_t irq;
 spinlock_t lkk;
-void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
-void solver(void *arg){while(1){enqueue(global,current_task[cpu_current()]);yield();}}
+//test semaphore
+void Tproduce(void *arg) { while (1) { P(&empty); printf(" produce%d ",cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  printf(" consume%d ",cpu_current()+1);putch(')'); V(&empty); } }
+//test spinlock
+void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);}}
+void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);}}
+
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
@@ -36,21 +39,19 @@ void merge(int l,int r){
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
 static Context *os_trap(Event ev, Context *ctx){
-    int j=ienabled();
-    iset(false);
-    assert(!ienabled());
+    kmt->spin_lock(&irq);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
             panic_on(r && next, "returning multiple contexts");
-            if (r) next = r;
+            if (r!=NULL) next = r;
         }
     }
-    iset(j);
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
+    kmt->spin_unlock(&irq);
     return next;
 }
 static void os_on_irq(int seq, int event, handler_t handler){
@@ -59,6 +60,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
+
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -69,19 +71,22 @@ static void hard_test(){
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
 }
+
+/*
+static void easy_test(){
+    kmt->spin_init(&lkk,"lkk");
+    kmt->create(task_alloc(),"solve1",solve1,NULL);
+    kmt->create(task_alloc(),"solve2",solve2,NULL);
+}*/
 static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
+    //easy_test();
     hard_test();
 }
 static void os_run() {
     iset(true);
-    yield();
-    assert(0);
-    for (const char *s = "Hello World from CPU #*\n"; *s; s++) {
-        putch(*s == '*' ? '0' + cpu_current() : *s);
-    }
     while (1) ;
 }
 MODULE_DEF(os) = {

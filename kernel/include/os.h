@@ -1,7 +1,7 @@
 #include<kernel.h>
-#define BLOCKED 2
-#define RUNNING 1
 #define RUNNABLE 0
+#define RUNNING 1
+#define BLOCKED 2
 #define DEAD 3
 #define QUESIZ 1024
 #define STACK_SIZE 32768
@@ -21,8 +21,7 @@ typedef struct queue{
 
 struct spinlock{
     int locked;
-    int status;
-    const char *name;
+    char name[128];
     int id;
 };
 
@@ -35,7 +34,7 @@ struct semaphore{
 struct task{
     int id;
     int status;
-    const char *name;
+    char name[128];
     void (*entry)(void *);
     struct Context context;
     uint8_t stack[STACK_SIZE];
