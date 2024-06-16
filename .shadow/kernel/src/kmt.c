@@ -80,7 +80,10 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     while(1){
         printf("666\n");
         if(tasks[start]!=NULL){
-            if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
+            if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING){
+                printf("got\n");
+                break;
+            }
         }
         if(start==task_count-1) start=0;
         else start++;
@@ -131,6 +134,7 @@ static void kmt_sem_signal(sem_t *sem){
     kmt_spin_unlock(sem->lk);
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
+    assert(task!=NULL);
     kmt->spin_lock(&lock);
     task->entry=entry;
     strcpy(task->name,name);
