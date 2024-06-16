@@ -88,7 +88,9 @@ static void os_init() {
 static void os_run() {
     iset(true);
     while(1){
-        printf(" main %d ",cpu_current()+1);
+        //printf(" main %d ",cpu_current()+1);
+        assert(ienabled());
+        yield();
     }
 }
 MODULE_DEF(os) = {
