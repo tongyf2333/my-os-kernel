@@ -29,7 +29,7 @@ void solve1(void *arg){
     while(1){
         kmt->spin_lock(&lkk);
         //putch('X');
-        printf("solve1 on cpu %d\n",cpu_current()+1);
+        //printf("solve1 on cpu %d\n",cpu_current()+1);
         kmt->spin_unlock(&lkk);
         enqueue(global,current_task[cpu_current()]);
         yield();
@@ -39,7 +39,7 @@ void solve2(void *arg){
     while(1){
         kmt->spin_lock(&lkk);
         //putch('Y');
-        printf("solve2 on cpu %d\n",cpu_current()+1);
+        //printf("solve2 on cpu %d\n",cpu_current()+1);
         kmt->spin_unlock(&lkk);
         enqueue(global,current_task[cpu_current()]);
         yield();
@@ -84,6 +84,7 @@ static Context *os_trap(Event ev, Context *ctx){
     }
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
+    printf("finish\n");
     return next;
 }
 
