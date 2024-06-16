@@ -56,7 +56,6 @@ void spinlk_unlock(spinlk *lk){
 }
 static spinlk lock;
 static void kmt_spin_lock(spinlock_t *lk){
-    push_off();
     if (holding(lk)){
         printf("%s\n",lk->name);
         panic("deadlock!");
@@ -65,6 +64,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
+    push_off();
     lk->id=current_task[cpu_current()]->id;
 }
 static void kmt_spin_unlock(spinlock_t *lk){
