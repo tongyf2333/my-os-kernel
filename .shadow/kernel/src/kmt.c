@@ -71,6 +71,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
+    printf("QWQ\n");
     kmt->spin_lock(&lock);
     int start;
     if(current_task[cpu_current()]->id==task_count-1) start=0;
