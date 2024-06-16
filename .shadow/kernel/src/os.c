@@ -36,9 +36,6 @@ void merge(int l,int r){
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
 static Context *os_trap(Event ev, Context *ctx){
-    int j=ienabled();
-    iset(false);
-    assert(!ienabled());
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -48,7 +45,6 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r!=NULL) next = r;
         }
     }
-    iset(j);
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
     return next;
