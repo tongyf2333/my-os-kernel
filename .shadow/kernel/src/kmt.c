@@ -61,6 +61,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 void schedule(){
     while(1){
+        assert(is_yield[cpu_current()]);
         kmt_spin_lock(&sch);
         wait[cpu_current()]->status=RUNNABLE;
         kmt_spin_unlock(&sch);
