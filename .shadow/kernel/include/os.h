@@ -35,7 +35,7 @@ struct semaphore{
 struct task{
     int id;
     int status;
-    const char *name;
+    char name[128];
     void (*entry)(void *);
     struct Context context;
     uint8_t stack[STACK_SIZE];

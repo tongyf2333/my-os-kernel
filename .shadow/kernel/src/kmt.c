@@ -158,7 +158,7 @@ static void kmt_sem_signal(sem_t *sem){
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     spinlk_lock(&lock);
     task->entry=entry;
-    task->name=name;
+    strcpy(task->name,name);
     task->status=RUNNING;
     task->context=*kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->id=task_count;
