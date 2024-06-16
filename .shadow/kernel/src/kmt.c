@@ -10,6 +10,10 @@ struct task *current_task[64];
 int task_count=0;
 queue_t *global;
 extern void solver();
+void delay(){
+    for(volatile int i=0;i<10000;i++){}
+    return;
+}
 void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
@@ -56,17 +60,16 @@ void spinlk_unlock(spinlk *lk){
 }
 static spinlk lock;
 static void kmt_spin_lock(spinlock_t *lk){
-    int got;
-    do{
-        got=atomic_xchg(&lk->locked, LOCKED);
-    }while (got != UNLOCKED);
-    for(volatile int i=0;i<10000;++i);
+    while(atomic_xchg(&lk->locked, LOCKED)){
+        if(ienabled()) yield();
+    }
+    delay();
     push_off();
-    lk->id=current_task[cpu_current()]->id;
+    lk->id=cpu_current();
 }
 static void kmt_spin_unlock(spinlock_t *lk){
-    lk->id = -1;
     atomic_xchg(&lk->locked, UNLOCKED);
+    lk->id=-1;
     pop_off();
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
