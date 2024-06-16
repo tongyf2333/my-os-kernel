@@ -138,12 +138,13 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     return 0;
 }
 static void kmt_init(){
-    kmt->spin_init(&lock,"lock");
     task_count=0;
-    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,current_task[i]=NULL;
+    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,cpus[i].intena=0;
+    //for(int i=0;i<128;i++) current_task[i]=NULL;
     //kmt_create(pmm->alloc(sizeof(task_t)),"irq",solver,NULL);
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
+    kmt->spin_init(&lock,"lock");
 }
 MODULE_DEF(kmt) = {
     .init=kmt_init,
