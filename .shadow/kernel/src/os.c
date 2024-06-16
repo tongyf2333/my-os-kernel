@@ -91,7 +91,7 @@ static void os_run() {
         //printf(" main %d ",cpu_current()+1);
         wait[cpu_current()]->status=RUNNABLE;
         assert(ienabled());
-        yield();
+        if(ienabled()) yield();
     }
 }
 MODULE_DEF(os) = {
