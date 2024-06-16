@@ -77,6 +77,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     if(current_task[cpu_current()]->id==task_count-1) start=0;
     else start=current_task[cpu_current()]->id+1;
     printf("%d\n",start+1);
+    putch('V');
     while(1){
         printf("666\n");
         if(tasks[start]!=NULL){
