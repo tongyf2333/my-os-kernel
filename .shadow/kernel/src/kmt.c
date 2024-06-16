@@ -7,7 +7,7 @@ typedef struct Context Context;
 struct cpu cpus[64];
 struct task *tasks[128];
 struct task *current_task[64];
-spinlock_t lock;
+spinlock_t lock,irq;
 int task_count=0;
 extern void solver();
 void delay(){
@@ -143,6 +143,7 @@ static void kmt_init(){
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     kmt->spin_init(&lock,"lock");
+    kmt->spin_init(&irq,"irq");
 }
 MODULE_DEF(kmt) = {
     .init=kmt_init,
