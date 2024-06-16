@@ -3,8 +3,8 @@ sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
-#define NPROD 4
-#define NCONS 4
+#define NPROD 1
+#define NCONS 1
 extern task_t *tasks[],*current_task[];
 extern int task_count;
 typedef struct hand{
@@ -16,8 +16,8 @@ int cnt=0;
 extern spinlock_t irq;
 spinlock_t lkk;
 //test semaphore
-void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); printf(" produce%d ",cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  printf(" consume%d ",cpu_current()+1);putch(')'); V(&empty); } }
 //test spinlock
 void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);}}
 void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);}}
@@ -60,7 +60,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-/*
+
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -71,7 +71,7 @@ static void hard_test(){
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
 }
-*/
+
 /*
 static void easy_test(){
     kmt->spin_init(&lkk,"lkk");
@@ -83,7 +83,7 @@ static void os_init() {
     kmt->init();
     //dev->init();
     //easy_test();
-    //hard_test();
+    hard_test();
 }
 static void os_run() {
     iset(true);
