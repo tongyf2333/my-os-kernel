@@ -79,6 +79,12 @@ static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
+    for(int i=0;i<cpu_count();i++){
+        task_t *t=task_alloc();
+        kmt->create(t,"null",NULL,NULL);
+        current_task[i]=t;
+        t->status=RUNNING;
+    }
     easy_test();
     //hard_test();
 }
