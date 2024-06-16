@@ -1,46 +1,26 @@
 #include <common.h>
-#define INT_MIN -2147483647
-#define INT_MAX 2147483647
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 1
 #define NPROD 1
 #define NCONS 1
-
 extern task_t *tasks[],*current_task[];
 extern int task_count;
-
+extern queue_t *global;
+extern void enqueue(queue_t *q,task_t *elem);
 typedef struct hand{
     int seq,event;
     handler_t handler;
 }hand;
-
 hand table[1024],temp[1024];
 int cnt=0,sum=0;
 spinlock_t lkk;
-
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
-
-void solve(void *arg){
-    while(1){
-        kmt->spin_lock(&lkk);
-        putch('X');
-        kmt->spin_unlock(&lkk);
-    }
-}
-
-void solver(void *arg){while(1);}
-
-static inline task_t *task_alloc() {
-  return pmm->alloc(sizeof(task_t));
-}
-
-int cmp1(hand a,hand b){
-    return a.seq<b.seq;
-}
-
+void solver(void *arg){while(1){enqueue(global,current_task[cpu_current()]);yield();}}
+static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
+int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
 	int mid=(l+r)/2;
@@ -55,8 +35,10 @@ void merge(int l,int r){
 	while(tl<=r) temp[now++]=table[tl++];
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
-
 static Context *os_trap(Event ev, Context *ctx){
+    int j=ienabled();
+    iset(false);
+    assert(!ienabled());
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -66,18 +48,17 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r) next = r;
         }
     }
+    iset(j);
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
     return next;
 }
-
 static void os_on_irq(int seq, int event, handler_t handler){
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -88,22 +69,12 @@ static void hard_test(){
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
 }
-
-/*static void easy_test(){
-    kmt->spin_init(&lkk,"lkk");
-    for(int i=0;i<2;i++)
-        kmt->create(task_alloc(),"solve",solve,NULL);
-}*/
-
 static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
-
-    //easy_test();
     hard_test();
 }
-
 static void os_run() {
     iset(true);
     yield();
@@ -113,7 +84,6 @@ static void os_run() {
     }
     while (1) ;
 }
-
 MODULE_DEF(os) = {
     .init=os_init,
     .run=os_run,

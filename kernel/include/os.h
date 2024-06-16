@@ -21,8 +21,9 @@ typedef struct queue{
 
 struct spinlock{
     int locked;
+    int status;
     const char *name;
-    struct cpu *cpu;  
+    int id;
 };
 
 struct semaphore{
@@ -36,7 +37,7 @@ struct task{
     int status;
     const char *name;
     void (*entry)(void *);
-    Context *context;
+    struct Context context;
     uint8_t stack[STACK_SIZE];
 };
 
