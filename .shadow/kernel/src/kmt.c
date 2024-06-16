@@ -81,6 +81,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 
 static Context *kmt_context_save(Event ev, Context *ctx){
+    printf("inside context save\n");
     if (current_task[cpu_current()]==NULL){
         kmt_spin_lock(&lock);
         while(global->cnt<=0){
@@ -103,6 +104,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
+    printf("inside schedule\n");
     kmt_spin_lock(&lock);
     while(global->cnt<=0){
         kmt_spin_unlock(&lock);
