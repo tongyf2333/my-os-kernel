@@ -9,10 +9,6 @@ struct task *tasks[128];
 struct task *current_task[64];
 spinlock_t lock,irq;
 int task_count=0;
-void delay(){
-    for(volatile int i=0;i<10000;i++){}
-    return;
-}
 void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
@@ -49,7 +45,6 @@ static void kmt_spin_lock(spinlock_t *lk){
     while(atomic_xchg(&lk->locked, LOCKED)){
         if(ienabled()) yield();
     }
-    //delay();
     push_off();
     lk->id=cpu_current();
 }
