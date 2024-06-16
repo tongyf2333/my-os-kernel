@@ -3,42 +3,28 @@
 #define UNLOCKED 0
 #define INT_MIN -2147483647
 #define INT_MAX 2147483647
-
 typedef struct Context Context;
-
 struct cpu cpus[64];
-
 struct task *tasks[128];
 struct task *current_task[64];
 int task_count=0;
-
 queue_t *global;
-
 extern void solver();
-
 void enqueue(queue_t *q,task_t *elem){
     q->element[((q->tl)+1)%QUESIZ]=elem;
     q->tl=((q->tl)+1)%QUESIZ;
     q->cnt++;
 }
-
 task_t *dequeue(queue_t *q){
     task_t *res=q->element[q->hd];
     q->hd=((q->hd)+1)%QUESIZ;
     q->cnt--;
     return res;
 }
-
-static struct cpu *mycpu(){
-    return &cpus[cpu_current()];
-}
-
+static struct cpu *mycpu(){return &cpus[cpu_current()];}
 bool holding(spinlock_t *lk) {
     assert(!ienabled());
-    return (
-        lk->locked == LOCKED &&
-        lk->id==current_task[cpu_current()]->id
-    );
+    return (lk->locked == LOCKED &&lk->id==current_task[cpu_current()]->id);
 }
 void push_off(void) {
     int old = ienabled();
@@ -47,7 +33,6 @@ void push_off(void) {
         mycpu()->intena = old;
     mycpu()->noff += 1;
 }
-
 void pop_off(void) {
     if(ienabled())
         panic("pop_off - interruptible");
@@ -57,7 +42,6 @@ void pop_off(void) {
     if(mycpu()->noff == 0 && mycpu()->intena)
         iset(true);
 }
-
 typedef struct spinlk{int locked;}spinlk;
 void spinlk_init(spinlk *lk){lk->locked=0;}
 void spinlk_lock(spinlk *lk){
@@ -71,7 +55,6 @@ void spinlk_unlock(spinlk *lk){
     pop_off();
 }
 static spinlk lock;
-
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
     if (holding(lk)){
@@ -84,7 +67,6 @@ static void kmt_spin_lock(spinlock_t *lk){
     }while (got != UNLOCKED);
     lk->id=current_task[cpu_current()]->id;
 }
-
 static void kmt_spin_unlock(spinlock_t *lk){
     if (!holding(lk)){
         printf("%s\n",lk->name);
@@ -94,7 +76,6 @@ static void kmt_spin_unlock(spinlock_t *lk){
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
 }
-
 static Context *kmt_context_save(Event ev, Context *ctx){
     if (current_task[cpu_current()]==NULL){
         spinlk_lock(&lock);
@@ -126,18 +107,15 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     spinlk_unlock(&lock);
     return &(current_task[cpu_current()]->context);
 }
-
 static void kmt_teardown(task_t *task){
     //pmm->free(task->context);
     task->status=DEAD;
 }
-
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
     lk->locked=UNLOCKED;
     lk->id=-1;
 }
-
 static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->lk=pmm->alloc(sizeof(spinlock_t));
     kmt_spin_init(sem->lk,name);
@@ -176,7 +154,6 @@ static void kmt_sem_signal(sem_t *sem){
     }
     kmt_spin_unlock(sem->lk);
 }
-
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     spinlk_lock(&lock);
     task->entry=entry;
@@ -190,7 +167,6 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     spinlk_unlock(&lock);
     return 0;
 }
-
 static void kmt_init(){
     global=pmm->alloc(sizeof(queue_t));
     global->cnt=0;
@@ -203,8 +179,6 @@ static void kmt_init(){
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
 }
-
-
 MODULE_DEF(kmt) = {
     .init=kmt_init,
     .create=kmt_create,
