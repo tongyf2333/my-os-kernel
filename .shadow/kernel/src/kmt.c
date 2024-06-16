@@ -80,6 +80,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     while(1){
         printf("666\n");
         if(tasks[start]!=NULL){
+            printf("%d\n",tasks[start]->status+1);
             if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING){
                 printf("got\n");
                 break;
