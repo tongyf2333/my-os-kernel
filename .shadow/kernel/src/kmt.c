@@ -141,6 +141,12 @@ static void kmt_init(){
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
     kmt->spin_init(&lock,"lock");
     kmt->spin_init(&irq,"irq");
+    for(int i=0;i<cpu_count();i++){
+        task_t *t=pmm->alloc(sizeof(task_t));
+        kmt->create(t,"null",NULL,NULL);
+        current_task[i]=t;
+        t->status=RUNNING;
+    }
 }
 MODULE_DEF(kmt) = {
     .init=kmt_init,
