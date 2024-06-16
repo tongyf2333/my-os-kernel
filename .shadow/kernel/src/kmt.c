@@ -132,6 +132,7 @@ static void kmt_sem_signal(sem_t *sem){
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     assert(task!=NULL);
     kmt->spin_lock(&lock);
+    printf("XCV\n");
     task->entry=entry;
     strcpy(task->name,name);
     task->status=RUNNABLE;
