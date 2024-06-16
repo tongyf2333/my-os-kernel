@@ -91,6 +91,7 @@ static void os_run() {
         //printf(" main %d ",cpu_current()+1);
         assert(ienabled());
         if(ienabled()) yield();
+        assert(wait[cpu_current()]!=NULL);
         wait[cpu_current()]->status=RUNNABLE;
     }
 }
