@@ -65,6 +65,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
     pop_off();
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
+    printf("QAQ\n");
     current_task[cpu_current()]->context=*ctx;
     current_task[cpu_current()]->status=RUNNABLE;
     return NULL;
