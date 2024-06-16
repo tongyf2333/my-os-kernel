@@ -85,9 +85,10 @@ static Context *kmt_schedule(Event ev, Context *ctx){
             start=cpu_current();
         }
     }
-    kmt->spin_unlock(&lock);
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
+    kmt->spin_unlock(&lock);
+    
     assert(&(current_task[cpu_current()]->context)!=NULL);
     return &(current_task[cpu_current()]->context);
 }
