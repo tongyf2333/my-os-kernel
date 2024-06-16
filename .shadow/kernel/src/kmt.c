@@ -56,22 +56,15 @@ void spinlk_unlock(spinlk *lk){
 }
 static spinlk lock;
 static void kmt_spin_lock(spinlock_t *lk){
-    /*if (holding(lk)){
-        printf("%s\n",lk->name);
-        panic("deadlock!");
-    }*/
     int got;
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
+    for(volatile int i=0;i<10000;++i);
     push_off();
     lk->id=current_task[cpu_current()]->id;
 }
 static void kmt_spin_unlock(spinlock_t *lk){
-    /*if (!holding(lk)){
-        printf("%s\n",lk->name);
-        panic("double release");
-    }*/
     lk->id = -1;
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
