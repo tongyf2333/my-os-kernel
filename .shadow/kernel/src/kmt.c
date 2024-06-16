@@ -90,7 +90,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 
 static Context *kmt_context_save(Event ev, Context *ctx){
-    printf("inside context save\n");
+    //printf("inside context save\n");
     if (current_task[cpu_current()]==NULL){
         spinlk_lock(&lock);
         while(global->cnt<=0){
@@ -98,9 +98,9 @@ static Context *kmt_context_save(Event ev, Context *ctx){
             spinlk_lock(&lock);
         }
         current_task[cpu_current()] = dequeue(global);
-        printf("cnm\n");
+        //printf("cnm\n");
         spinlk_unlock(&lock);
-        printf("aaa\n");
+        //printf("aaa\n");
     }
     else{
         current_task[cpu_current()]->context = ctx;
@@ -115,7 +115,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){//bug here
-    printf("inside schedule\n");
+    //printf("inside schedule\n");
     spinlk_lock(&lock);
     while(global->cnt<=0){
         spinlk_unlock(&lock);
