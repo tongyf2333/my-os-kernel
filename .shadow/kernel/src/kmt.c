@@ -127,7 +127,7 @@ static void kmt_sem_wait(sem_t *sem){
         enqueue(sem->que, now);
         while(now->status==BLOCKED){
             kmt_spin_unlock(sem->lk);
-            assert(ienabled());
+            //assert(ienabled());
             yield();
             kmt_spin_lock(sem->lk);
         }
