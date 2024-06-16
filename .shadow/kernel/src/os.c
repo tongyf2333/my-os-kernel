@@ -72,6 +72,7 @@ void merge(int l,int r){
 }
 
 static Context *os_trap(Event ev, Context *ctx){
+    printf("event:%d\n",ev.event+1);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
