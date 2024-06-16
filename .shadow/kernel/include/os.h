@@ -23,7 +23,7 @@ struct spinlock{
     int locked;
     int status;
     const char *name;
-    struct cpu *cpu;  
+    int id;
 };
 
 struct semaphore{

@@ -36,7 +36,7 @@ bool holding(spinlock_t *lk) {
     assert(!ienabled());
     return (
         lk->locked == LOCKED &&
-        lk->cpu == mycpu()
+        lk->id==current_task[cpu_current()]->id
     );
 }
 void push_off(void) {
@@ -59,23 +59,23 @@ void pop_off(void) {
 
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
-    /*if (holding(lk)){
+    if (holding(lk)){
         printf("%s\n",lk->name);
         panic("deadlock!");
-    }*/
+    }
     int got;
     do{
         got=atomic_xchg(&lk->locked, LOCKED);
     }while (got != UNLOCKED);
-    lk->cpu=mycpu();
+    lk->id=current_task[cpu_current()]->id;
 }
 
 static void kmt_spin_unlock(spinlock_t *lk){
-    /*if (!holding(lk)){
+    if (!holding(lk)){
         printf("%s\n",lk->name);
         panic("double release");
-    }*/
-    lk->cpu = NULL;
+    }
+    lk->id = -1;
     atomic_xchg(&lk->locked, UNLOCKED);
     pop_off();
 }
@@ -124,7 +124,7 @@ static void kmt_teardown(task_t *task){
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     lk->name=name;
     lk->locked=UNLOCKED;
-    lk->cpu=NULL;
+    lk->id=-1;
 }
 
 static void kmt_sem_init(sem_t *sem, const char *name, int value){
