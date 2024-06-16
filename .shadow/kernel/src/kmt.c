@@ -158,14 +158,15 @@ static void kmt_init(){
     for(int i=0;i<cpu_count();i++){
         task_t *t=pmm->alloc(sizeof(task_t));
         kmt->create(t,"sched",schedule,NULL);
+        current_task[i]=t;
         t->status=RUNNING;
     }
-    for(int i=0;i<cpu_count();i++){
+    /*for(int i=0;i<cpu_count();i++){
         task_t *t=pmm->alloc(sizeof(task_t));
         kmt->create(t,"null",NULL,NULL);
         current_task[i]=t;
         t->status=RUNNING;
-    }
+    }*/
 }
 MODULE_DEF(kmt) = {
     .init=kmt_init,
