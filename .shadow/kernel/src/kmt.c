@@ -60,7 +60,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
     current_task[cpu_current()]->context=*ctx;
-    current_task[cpu_current()]->status=RUNNABLE;
+    if(ev.event!=EVENT_YIELD) current_task[cpu_current()]->status=RUNNABLE;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
@@ -116,33 +116,11 @@ static void kmt_sem_wait(sem_t *sem){
             if(ienabled()) yield();
         }
     }
-    /*int acquire=0;
-    kmt_spin_lock(sem->lk);
-    if(sem->count>0){
-        sem->count--;
-        acquire=1;
-    }
-    else{
-        task_t *cur=current_task[cpu_current()];
-        cur->status=BLOCKED;
-        enqueue(sem->que,cur);
-    }
-    kmt_spin_unlock(sem->lk);
-    if(!acquire){
-        if(ienabled()) yield();
-    }*/
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count++;
     kmt_spin_unlock(sem->lk);
-    /*kmt_spin_lock(sem->lk);
-    if(sem->que->cnt>0){
-        task_t *cur=dequeue(sem->que);
-        cur->status=RUNNABLE;
-    }
-    else sem->count++;
-    kmt_spin_unlock(sem->lk);*/
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     assert(task!=NULL);
