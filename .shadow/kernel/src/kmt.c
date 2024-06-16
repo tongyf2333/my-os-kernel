@@ -6,7 +6,7 @@
 typedef struct Context Context;
 struct cpu cpus[64];
 struct task *tasks[128];
-struct task *current_task[64],*wait[64];
+struct task *current_task[64];
 spinlock_t lock,irq;
 int task_count=0;
 void enqueue(queue_t *q,task_t *elem){
@@ -60,35 +60,24 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
     current_task[cpu_current()]->context=*ctx;
-    if(ev.event==EVENT_YIELD) current_task[cpu_current()]->status=RUNNABLE;
+    current_task[cpu_current()]->status=RUNNABLE;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     kmt->spin_lock(&lock);
-    int start=0;int tmp=current_task[cpu_current()]->id;
-    if(current_task[cpu_current()]->status==RUNNING){
-        start=current_task[cpu_current()]->id;
-    }
-    else{
-        if(current_task[cpu_current()]->id<cpu_count()){
-            start=cpu_count();
-            while(1){
-                if(tasks[start]!=NULL){
-                    if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
-                }
-                if(start==task_count-1) start=cpu_count();
-                else start++;
-            }
+    int start=0;
+    if(current_task[cpu_current()]->id==task_count-1) start=0;
+    else start=current_task[cpu_current()]->id+1;
+    while(1){
+        if(tasks[start]!=NULL){
+            if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
         }
-        else{
-            wait[cpu_current()]=current_task[cpu_current()];
-            start=cpu_current();
-        }
+        if(start==task_count-1) start=0;
+        else start++;
     }
+    kmt->spin_unlock(&lock);
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
-    kmt->spin_unlock(&lock);
-    printf(" %d->%d ",tmp+1,current_task[cpu_current()]->id+1);
     assert(&(current_task[cpu_current()]->context)!=NULL);
     return &(current_task[cpu_current()]->context);
 }
@@ -117,11 +106,33 @@ static void kmt_sem_wait(sem_t *sem){
             if(ienabled()) yield();
         }
     }
+    /*int acquire=0;
+    kmt_spin_lock(sem->lk);
+    if(sem->count>0){
+        sem->count--;
+        acquire=1;
+    }
+    else{
+        task_t *cur=current_task[cpu_current()];
+        cur->status=BLOCKED;
+        enqueue(sem->que,cur);
+    }
+    kmt_spin_unlock(sem->lk);
+    if(!acquire){
+        if(ienabled()) yield();
+    }*/
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count++;
     kmt_spin_unlock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
+    if(sem->que->cnt>0){
+        task_t *cur=dequeue(sem->que);
+        cur->status=RUNNABLE;
+    }
+    else sem->count++;
+    kmt_spin_unlock(sem->lk);*/
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     assert(task!=NULL);
@@ -138,7 +149,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
 }
 static void kmt_init(){
     task_count=0;
-    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,cpus[i].intena=0,current_task[i]=NULL,wait[i]=NULL;
+    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,cpus[i].intena=0,current_task[i]=NULL;
     for(int i=0;i<128;i++) tasks[i]=NULL;
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);

@@ -5,7 +5,7 @@ sem_t empty, fill;
 #define N 5
 #define NPROD 1
 #define NCONS 1
-extern task_t *tasks[],*current_task[],*wait[];
+extern task_t *tasks[],*current_task[];
 extern int task_count;
 typedef struct hand{
     int seq,event;
@@ -16,8 +16,8 @@ int cnt=0;
 extern spinlock_t irq;
 spinlock_t lkk;
 //test semaphore
-void Tproduce(void *arg) { while (1) { P(&empty); /*printf(" produce%d ",cpu_current()+1);*/putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  /*printf(" consume%d ",cpu_current()+1);*/putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); printf(" produce%d ",cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  printf(" consume%d ",cpu_current()+1);putch(')'); V(&empty); } }
 //test spinlock
 void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);}}
 void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);}}
@@ -87,13 +87,7 @@ static void os_init() {
 }
 static void os_run() {
     iset(true);
-    while(1){
-        //printf(" main %d ",cpu_current()+1);
-        assert(ienabled());
-        if(ienabled()) yield();
-        assert(wait[cpu_current()]!=NULL);
-        wait[cpu_current()]->status=RUNNABLE;
-    }
+    while (1) ;
 }
 MODULE_DEF(os) = {
     .init=os_init,
