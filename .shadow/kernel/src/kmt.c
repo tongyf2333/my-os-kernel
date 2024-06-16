@@ -104,7 +104,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    kmt_spin_lock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
     sem->count--;
     if(sem->count<0){
         task_t *now=current_task[cpu_current()];
@@ -116,10 +116,22 @@ static void kmt_sem_wait(sem_t *sem){
             kmt_spin_lock(sem->lk);
         }
     }
-    kmt_spin_unlock(sem->lk);
+    kmt_spin_unlock(sem->lk);*/
+    int acquire=0;
+    while(!acquire){
+        kmt_spin_lock(sem->lk);
+        if(sem->count>0){
+            sem->count--;
+            acquire=1;
+        }
+        kmt_spin_unlock(sem->lk);
+        if(!acquire){
+            if(ienabled()) yield();
+        }
+    }
 }
 static void kmt_sem_signal(sem_t *sem){
-    kmt_spin_lock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
     sem->count++;
     if(sem->count<=0){
         if(sem->que->cnt>0){
@@ -127,6 +139,9 @@ static void kmt_sem_signal(sem_t *sem){
             now->status=RUNNABLE;
         }
     }
+    kmt_spin_unlock(sem->lk);*/
+    kmt_spin_lock(sem->lk);
+    sem->count++;
     kmt_spin_unlock(sem->lk);
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
