@@ -7,18 +7,15 @@ sem_t empty, fill;
 #define NCONS 1
 extern task_t *tasks[],*current_task[];
 extern int task_count;
-extern queue_t *global;
-extern void enqueue(queue_t *q,task_t *elem);
 typedef struct hand{
     int seq,event;
     handler_t handler;
 }hand;
 hand table[1024],temp[1024];
-int cnt=0,sum=0;
-spinlock_t lkk;
+int cnt=0;
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
-void solver(void *arg){while(1){enqueue(global,current_task[cpu_current()]);assert(ienabled());yield();}}
+void solver(void *arg){while(1){if(ienabled()) yield();}}
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
