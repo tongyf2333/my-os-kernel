@@ -87,6 +87,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
     assert(&(current_task[cpu_current()]->context)!=NULL);
+    printf("fuck\n");
     return &(current_task[cpu_current()]->context);
 }
 static void kmt_teardown(task_t *task){
