@@ -2,9 +2,9 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 1
-#define NPROD 1
-#define NCONS 1
+#define N 5
+#define NPROD 2
+#define NCONS 2
 extern task_t *tasks[],*current_task[];
 extern int task_count;
 typedef struct hand{

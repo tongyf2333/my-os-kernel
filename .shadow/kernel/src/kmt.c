@@ -65,7 +65,6 @@ static void kmt_spin_unlock(spinlock_t *lk){
     pop_off();
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
-    //printf("QAQ\n");
     current_task[cpu_current()]->context=*ctx;
     current_task[cpu_current()]->status=RUNNABLE;
     return NULL;
@@ -76,7 +75,6 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     if(current_task[cpu_current()]->id==task_count-1) start=0;
     else start=current_task[cpu_current()]->id+1;
     while(1){
-        //printf("www\n");
         if(tasks[start]!=NULL){
             if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING){
                 break;
@@ -104,19 +102,6 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    /*kmt_spin_lock(sem->lk);
-    sem->count--;
-    if(sem->count<0){
-        task_t *now=current_task[cpu_current()];
-        now->status = BLOCKED;
-        enqueue(sem->que, now);
-        while(now->status==BLOCKED){
-            kmt_spin_unlock(sem->lk);
-            if(ienabled()) yield();
-            kmt_spin_lock(sem->lk);
-        }
-    }
-    kmt_spin_unlock(sem->lk);*/
     int acquire=0;
     while(!acquire){
         kmt_spin_lock(sem->lk);
@@ -131,15 +116,6 @@ static void kmt_sem_wait(sem_t *sem){
     }
 }
 static void kmt_sem_signal(sem_t *sem){
-    /*kmt_spin_lock(sem->lk);
-    sem->count++;
-    if(sem->count<=0){
-        if(sem->que->cnt>0){
-            task_t *now=dequeue(sem->que);
-            now->status=RUNNABLE;
-        }
-    }
-    kmt_spin_unlock(sem->lk);*/
     kmt_spin_lock(sem->lk);
     sem->count++;
     kmt_spin_unlock(sem->lk);
