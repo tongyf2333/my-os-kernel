@@ -9,7 +9,6 @@ struct task *tasks[128];
 struct task *current_task[64];
 spinlock_t lock,irq;
 int task_count=0;
-extern void solver();
 void delay(){
     for(volatile int i=0;i<10000;i++){}
     return;
@@ -102,7 +101,7 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    int acquire=0;
+    /*int acquire=0;
     while(!acquire){
         kmt_spin_lock(sem->lk);
         if(sem->count>0){
@@ -113,11 +112,33 @@ static void kmt_sem_wait(sem_t *sem){
         if(!acquire){
             if(ienabled()) yield();
         }
+    }*/
+    int acquire=0;
+    kmt_spin_lock(sem->lk);
+    if(sem->count>0){
+        sem->count--;
+        acquire=1;
+    }
+    else{
+        task_t *cur=current_task[cpu_current()];
+        cur->status=BLOCKED;
+        enqueue(sem->que,cur);
+    }
+    kmt_spin_unlock(sem->lk);
+    if(!acquire){
+        if(ienabled()) yield();
     }
 }
 static void kmt_sem_signal(sem_t *sem){
-    kmt_spin_lock(sem->lk);
+    /*kmt_spin_lock(sem->lk);
     sem->count++;
+    kmt_spin_unlock(sem->lk);*/
+    kmt_spin_lock(sem->lk);
+    if(sem->que->cnt>0){
+        task_t *cur=dequeue(sem->que);
+        cur->status=RUNNABLE;
+    }
+    else sem->count++;
     kmt_spin_unlock(sem->lk);
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){

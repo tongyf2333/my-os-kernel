@@ -15,10 +15,13 @@ hand table[1024],temp[1024];
 int cnt=0;
 extern spinlock_t irq;
 spinlock_t lkk;
+//test semaphore
 void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
+//test spinlock
 void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);}}
 void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);}}
+
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
