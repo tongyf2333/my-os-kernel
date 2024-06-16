@@ -37,7 +37,7 @@ struct task{
     int status;
     const char *name;
     void (*entry)(void *);
-    Context *context;
+    struct Context context;
     uint8_t stack[STACK_SIZE];
 };
 

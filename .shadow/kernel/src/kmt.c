@@ -106,7 +106,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
         spinlk_unlock(&lock);
     }
     else{
-        current_task[cpu_current()]->context = ctx;
+        current_task[cpu_current()]->context = *ctx;
     }
     if(ev.event!=EVENT_YIELD){
         spinlk_lock(&lock);
@@ -122,13 +122,13 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         spinlk_lock(&lock);
     }
     current_task[cpu_current()] = dequeue(global);
-    assert(current_task[cpu_current()]->context!=NULL);
+    //assert(current_task[cpu_current()]->context!=NULL);
     spinlk_unlock(&lock);
-    return current_task[cpu_current()]->context;
+    return &(current_task[cpu_current()]->context);
 }
 
 static void kmt_teardown(task_t *task){
-    pmm->free(task->context);
+    //pmm->free(task->context);
     task->status=DEAD;
 }
 
@@ -182,7 +182,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->entry=entry;
     task->name=name;
     task->status=RUNNING;
-    task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
+    task->context=*kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->id=task_count;
     tasks[task_count]=task;
     task_count++;
