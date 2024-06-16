@@ -22,13 +22,13 @@ hand table[1024],temp[1024];
 int cnt=0,sum=0;
 spinlock_t lkk;
 
-void Tproduce(void *arg) { while (1) { P(&empty); putch('('); /*printf(" produce on cpu%d ",cpu_current()+1);*/ V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); /*printf(" consume on cpu%d ",cpu_current()+1);*/ V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  putch(')'); V(&empty); } }
 
 void solve1(void *arg){
     while(1){
         kmt->spin_lock(&lkk);
-        //putch('X');
+        putch('X');
         //printf("solve1 on cpu %d\n",cpu_current()+1);
         kmt->spin_unlock(&lkk);
         enqueue(global,current_task[cpu_current()]);
@@ -38,7 +38,7 @@ void solve1(void *arg){
 void solve2(void *arg){
     while(1){
         kmt->spin_lock(&lkk);
-        //putch('Y');
+        putch('Y');
         //printf("solve2 on cpu %d\n",cpu_current()+1);
         kmt->spin_unlock(&lkk);
         enqueue(global,current_task[cpu_current()]);
@@ -84,7 +84,7 @@ static Context *os_trap(Event ev, Context *ctx){
     }
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
-    printf("finish\n");
+    //printf("finish\n");
     return next;
 }
 
@@ -95,7 +95,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 
-/*static void hard_test(){
+static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
     for (int i = 0; i < NPROD; i++) {
@@ -104,20 +104,20 @@ static void os_on_irq(int seq, int event, handler_t handler){
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}*/
-
+}
+/*
 static void easy_test(){
     kmt->spin_init(&lkk,"lkk");
     kmt->create(task_alloc(),"X",solve1,NULL);
     kmt->create(task_alloc(),"Y",solve2,NULL);
 }
-
+*/
 static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
-    easy_test();
-    //hard_test();
+    //easy_test();
+    hard_test();
 }
 
 static void os_run() {
