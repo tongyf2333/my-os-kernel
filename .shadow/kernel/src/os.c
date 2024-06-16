@@ -46,7 +46,7 @@ void solve2(void *arg){
     }
 }
 
-void solver(void *arg){while(1){ /*printf(" solve on cpu%d ",cpu_current()+1);*/ enqueue(global,current_task[cpu_current()]);yield();}}
+void solver(void *arg){while(1){enqueue(global,current_task[cpu_current()]);yield();}}
 
 static inline task_t *task_alloc() {
   return pmm->alloc(sizeof(task_t));
@@ -72,7 +72,7 @@ void merge(int l,int r){
 }
 
 static Context *os_trap(Event ev, Context *ctx){
-    printf("event:%d\n",ev.event+1);
+    //printf("event:%d\n",ev.event+1);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
