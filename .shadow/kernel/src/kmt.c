@@ -12,16 +12,6 @@ int task_count=0;
 
 queue_t *global;
 
-typedef struct spinlk{int locked;}spinlk;
-void spinlk_init(spinlk *lk){lk->locked=0;}
-void spinlk_lock(spinlk *lk){
-    retry:
-    int status=atomic_xchg(&lk->locked,LOCKED);
-    while(status!=UNLOCKED) goto retry;
-}
-void spinlk_unlock(spinlk *lk){atomic_xchg(&lk->locked,UNLOCKED);}
-static spinlk lock;
-
 extern void solver();
 
 void enqueue(queue_t *q,task_t *elem){
@@ -65,6 +55,20 @@ void pop_off(void) {
     if(mycpu()->noff == 0 && mycpu()->intena)
         iset(true);
 }
+
+typedef struct spinlk{int locked;}spinlk;
+void spinlk_init(spinlk *lk){lk->locked=0;}
+void spinlk_lock(spinlk *lk){
+    push_off();
+    retry:
+    int status=atomic_xchg(&lk->locked,LOCKED);
+    while(status!=UNLOCKED) goto retry;
+}
+void spinlk_unlock(spinlk *lk){
+    atomic_xchg(&lk->locked,UNLOCKED);
+    pop_off();
+}
+static spinlk lock;
 
 static void kmt_spin_lock(spinlock_t *lk){
     push_off();
