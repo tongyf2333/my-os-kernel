@@ -149,7 +149,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
 }
 static void kmt_init(){
     task_count=0;
-    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,cpus[i].intena=0,current_task[i]=NULL,is_yield[i]=0;
+    for(int i=0;i<cpu_count();i++) cpus[i].noff=0,cpus[i].intena=0,current_task[i]=NULL,is_yield[i]=1;
     for(int i=0;i<128;i++) tasks[i]=NULL;
     os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
     os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
