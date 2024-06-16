@@ -86,6 +86,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
         kmt_spin_lock(&lock);
         while(global->cnt<=0){
             kmt_spin_unlock(&lock);
+            __sync_synchronize();
             kmt_spin_lock(&lock);
         }
         current_task[cpu_current()] = dequeue(global);
