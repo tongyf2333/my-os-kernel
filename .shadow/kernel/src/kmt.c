@@ -50,7 +50,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     while(atomic_xchg(&lk->locked, LOCKED)){
         if(ienabled()) yield();
     }
-    delay();
+    //delay();
     push_off();
     lk->id=cpu_current();
 }
