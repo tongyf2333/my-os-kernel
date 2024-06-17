@@ -76,7 +76,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
 }
 void solver(){
     while(1){
-        if(ienabled()) yield();
+        yield();
         task_t *task=current_task[cpu_current()];
         kmt_spin_lock(&lock);
         if(task->status==WAIT_SCHEDULE) task->status=RUNNABLE;
