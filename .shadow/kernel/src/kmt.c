@@ -65,7 +65,7 @@ static Context *kmt_context_save(Event ev, Context *ctx){
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     kmt->spin_lock(&lock);
-    int start=0;
+    int start=0;int tmp=current_task[cpu_current()]->id;
     if(current_task[cpu_current()]->id>=cpu_count()){
         while(tasks[cpu_current()]->status!=RUNNABLE);
         start=cpu_current();
@@ -92,7 +92,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         }
         assert(tasks[start]->status!=RUNNING);
     }
-    
+    printf(" %d->%d ",tmp+1,start+1);
     kmt->spin_unlock(&lock);
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
