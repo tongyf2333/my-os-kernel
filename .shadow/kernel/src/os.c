@@ -87,9 +87,7 @@ static void os_init() {
 }
 static void os_run() {
     iset(true);
-    while (1){
-        if(ienabled()) yield();
-    }
+    while (1);
 }
 MODULE_DEF(os) = {
     .init=os_init,

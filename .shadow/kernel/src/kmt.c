@@ -6,7 +6,7 @@
 typedef struct Context Context;
 struct cpu cpus[64];
 struct task *tasks[128];
-struct task *current_task[64],*wait[64];
+struct task *current_task[64];
 spinlock_t lock,irq;
 int task_count=0;
 void enqueue(queue_t *q,task_t *elem){
@@ -66,28 +66,15 @@ static Context *kmt_context_save(Event ev, Context *ctx){
 static Context *kmt_schedule(Event ev, Context *ctx){
     kmt->spin_lock(&lock);
     int start=0;
-    if(current_task[cpu_current()]->id<cpu_count()){
-        start=task_count-1;
-        while(1){
-            if(tasks[start]!=NULL){
-                if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
-            }
-            if(start==0) start=task_count-1;
-            else start--;
+    if(current_task[cpu_current()]->id==task_count-1) start=0;
+    else start=current_task[cpu_current()]->id+1;
+    while(1){
+        if(tasks[start]!=NULL){
+            if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
         }
+        if(start==task_count-1) start=0;
+        else start++;
     }
-    else{
-        //start=(current_task[cpu_current()]->id+1)%task_count;
-        start=0;
-        while(1){
-            if(tasks[start]!=NULL){
-                if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
-            }
-            if(start==task_count-1) start=0;
-            else start++;
-        }
-    }
-    //printf("[%d->%d]",current_task[cpu_current()]->id+1,start+1);
     kmt->spin_unlock(&lock);
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
