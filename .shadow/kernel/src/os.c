@@ -66,6 +66,7 @@ static void hard_test(){
 static void os_init() {
     pmm->init();
     kmt->init();
+    printf("QAQ\n");
     //dev->init();
     hard_test();
 }
