@@ -15,7 +15,10 @@ extern void solver();
 //test semaphore
 void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
-
+//test spinlock
+spinlock_t lkk;
+void print1(){while(1){kmt->spin_lock(&lkk);putch('(');kmt->spin_unlock(&lkk);}}
+void print2(){while(1){kmt->spin_lock(&lkk);putch(')');kmt->spin_unlock(&lkk);}}
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
@@ -52,7 +55,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-
+/*
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -62,13 +65,19 @@ static void hard_test(){
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
+}*/
+static void easy_test(){
+    kmt->spin_init(&lkk,"lkk");
+    kmt->create(task_alloc(),"print",print1,NULL);
+    kmt->create(task_alloc(),"print",print2,NULL);
 }
 static void os_init() {
     pmm->init();
     kmt->init();
-    printf("QAQ\n");
+    //printf("QAQ\n");
     //dev->init();
-    hard_test();
+    easy_test();
+    //hard_test();
 }
 static void os_run() {
     solver();
