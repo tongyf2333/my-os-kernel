@@ -165,6 +165,7 @@ static void kmt_sem_signal(sem_t *sem){
             if(cur->status==WAIT_AWAKE){
                 cur->status=RUNNABLE;
                 kmt_spin_unlock(&lock);
+                break;
             }
             kmt_spin_unlock(&lock);
         }
