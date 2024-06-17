@@ -87,6 +87,7 @@ static void os_init() {
 }
 static void os_run() {
     iset(true);
+    yield();
     while (1);
 }
 MODULE_DEF(os) = {
