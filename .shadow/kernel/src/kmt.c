@@ -68,7 +68,8 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     int start=0;
     if(current_task[cpu_current()]->id>=cpu_count()){
         start=cpu_current();
-        if(current_task[cpu_current()]->id==task_count-1) start=0;
+        assert(tasks[start]->status!=RUNNING);
+        /*if(current_task[cpu_current()]->id==task_count-1) start=0;
         else start=current_task[cpu_current()]->id+1;
         while(1){
             if(tasks[start]!=NULL){
@@ -76,7 +77,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
             }
             if(start==task_count-1) start=0;
             else start++;
-        }
+        }*/
     }
     else{
         if(current_task[cpu_current()]->id==task_count-1) start=0;
