@@ -109,8 +109,8 @@ static void kmt_teardown(task_t *task){
 static void kmt_init(){
     kmt_spin_init(&lock,"lock");
     for(int i=0;i<cpu_count();i++){
-        current_task[i]=pmm->alloc(sizeof(task_t));
-        scheduler[i]=pmm->alloc(sizeof(task_t));
+        current_task[i]=pmm->alloc(sizeof(task_t*));
+        scheduler[i]=pmm->alloc(sizeof(Context*));
 
         task_t *task=pmm->alloc(sizeof(task_t));
         strcpy(task->name,"handler");
