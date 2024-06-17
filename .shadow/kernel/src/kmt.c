@@ -81,13 +81,13 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         }*/
     }
     else{
-        if(current_task[cpu_current()]->id==task_count-1) start=0;
+        if(current_task[cpu_current()]->id==task_count-1) start=cpu_count();
         else start=current_task[cpu_current()]->id+1;
         while(1){
             if(tasks[start]!=NULL){
                 if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
             }
-            if(start==task_count-1) start=0;
+            if(start==task_count-1) start=cpu_count();
             else start++;
         }
     }
