@@ -3,8 +3,8 @@ sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
-#define NPROD 1
-#define NCONS 1
+#define NPROD 4
+#define NCONS 4
 extern task_t *tasks[],*current_task[];
 extern int task_count;
 typedef struct hand{
@@ -16,8 +16,8 @@ int cnt=0;
 extern spinlock_t irq;
 spinlock_t lkk;
 //test semaphore
-void Tproduce(void *arg) { while (1) { P(&empty); printf(" produce%d ",cpu_current()+1);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);  printf(" consume%d ",cpu_current()+1);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty); /*printf(" produce%d ",cpu_current()+1);*/putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);  /*printf(" consume%d ",cpu_current()+1);*/putch(')'); V(&empty); } }
 //test spinlock
 void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);}}
 void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);}}
