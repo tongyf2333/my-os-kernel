@@ -139,38 +139,23 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
-    kmt_spin_lock(sem->lk);
-    int acquired=0;
-    if(sem->count>0){
-        sem->count--;
-        acquired=1;
+    int acquire=0;
+    while(!acquire){
+        kmt_spin_lock(sem->lk);
+        if(sem->count>0){
+            sem->count--;
+            acquire=1;
+        }
+        kmt_spin_unlock(sem->lk);
+        if(!acquire){
+            if(ienabled()) yield();
+        }
     }
-    else{
-        task_t *cur=current_task[cpu_current()];
-        kmt_spin_lock(&lock);
-        cur->status=WAIT_AWAKE_SCHEDULE;
-        kmt_spin_unlock(&lock);
-        enqueue(sem->que,cur);
-    }
-    kmt_spin_unlock(sem->lk);
-    if(!acquired) yield();
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
-    if(sem->count<0){
-        task_t *cur=dequeue(sem->que);
-        kmt_spin_unlock(sem->lk);
-        while(1){
-            kmt_spin_lock(&lock);
-            if(cur->status==WAIT_AWAKE){
-                cur->status=RUNNABLE;
-                kmt_spin_unlock(&lock);
-                break;
-            }
-            kmt_spin_unlock(&lock);
-        }
-    }
-    else sem->count++,kmt_spin_unlock(sem->lk);
+    sem->count++;
+    kmt_spin_unlock(sem->lk);
 }
 MODULE_DEF(kmt) = {
     .init=kmt_init,
