@@ -6,7 +6,7 @@
 typedef struct Context Context;
 struct cpu cpus[64];
 struct task *tasks[128];
-struct task *current_task[64];
+struct task *current_task[64],*wait[64];
 spinlock_t lock,irq;
 int task_count=0;
 void enqueue(queue_t *q,task_t *elem){
@@ -69,6 +69,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     if(current_task[cpu_current()]->id>=cpu_count()){
         while(tasks[cpu_current()]->status!=RUNNABLE);
         start=cpu_current();
+        wait[cpu_current()]=current_task[cpu_current()];
         assert(tasks[start]->status!=RUNNING);
         /*if(current_task[cpu_current()]->id==task_count-1) start=0;
         else start=current_task[cpu_current()]->id+1;
