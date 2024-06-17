@@ -13,8 +13,8 @@ hand table[1024],temp[1024];
 int cnt=0;
 extern void solver();
 //test semaphore
-void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);/*printf("[producer on %d]",cpu_current()+1);*/putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);/*printf("[consumer on %d]",cpu_current()+1);*/putch(')'); V(&empty); } }
 //test spinlock
 spinlock_t lkk;
 void print1(){while(1){kmt->spin_lock(&lkk);putch('(');kmt->spin_unlock(&lkk);}}

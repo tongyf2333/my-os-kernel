@@ -10,18 +10,6 @@ struct task *current_task[64];
 Context *scheduler[64];
 spinlock_t lock;
 int task_count=0;
-//queue
-void enqueue(queue_t *q,task_t *elem){
-    q->element[((q->tl)+1)%QUESIZ]=elem;
-    q->tl=((q->tl)+1)%QUESIZ;
-    q->cnt++;
-}
-task_t *dequeue(queue_t *q){
-    task_t *res=q->element[q->hd];
-    q->hd=((q->hd)+1)%QUESIZ;
-    q->cnt--;
-    return res;
-}
 //linklist
 static void insert(task_t *head,task_t *task){
     task_t *prev=head,*next=prev->next;
@@ -49,7 +37,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 //context saving and scheduling
 static Context *kmt_context_save(Event ev, Context *ctx){
     task_t *task=current_task[cpu_current()];
-    if(task->status==WAIT_AWAKE_SCHEDULE||task->status==RUNNING) task->context=ctx;
+    if(/*task->status==WAIT_AWAKE_SCHEDULE||*/task->status==RUNNING) task->context=ctx;
     else if(task->status==WAIT_LOAD) scheduler[cpu_current()]=ctx;
     return NULL;
 }
@@ -70,7 +58,7 @@ static Context *sched_yield(Event ev,Context *ctx){
 static Context *kmt_schedule(Event ev, Context *ctx){
     task_t *task=current_task[cpu_current()];
     if(task->status==RUNNING) return task->context;
-    else if(task->status==WAIT_AWAKE_SCHEDULE||task->status==WAIT_SCHEDULE) return scheduler[cpu_current()];
+    else if(/*task->status==WAIT_AWAKE_SCHEDULE||*/task->status==WAIT_SCHEDULE) return scheduler[cpu_current()];
     else return NULL;
 }
 void solver(){
@@ -79,7 +67,7 @@ void solver(){
         task_t *task=current_task[cpu_current()];
         kmt_spin_lock(&lock);
         if(task->status==WAIT_SCHEDULE) task->status=RUNNABLE;
-        else if(task->status==WAIT_AWAKE_SCHEDULE) task->status=WAIT_AWAKE;
+        //else if(task->status==WAIT_AWAKE_SCHEDULE) task->status=WAIT_AWAKE;
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
         task=task->prev;
@@ -136,10 +124,6 @@ static void kmt_sem_init(sem_t *sem, const char *name, int value){
     sem->lk=pmm->alloc(sizeof(spinlock_t));
     kmt_spin_init(sem->lk,name);
     sem->count=value;
-    sem->que=pmm->alloc(sizeof(queue_t));
-    sem->que->hd=0;
-    sem->que->tl=-1;
-    sem->que->cnt=0;
 }
 static void kmt_sem_wait(sem_t *sem){
     int acquire=0;
