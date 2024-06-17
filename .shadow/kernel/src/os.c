@@ -13,8 +13,8 @@ typedef struct hand{
 }hand;
 hand table[1024],temp[1024];
 int cnt=0;
-extern spinlock_t irq;
 spinlock_t lkk;
+extern void solver();
 //test semaphore
 void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
@@ -39,7 +39,6 @@ void merge(int l,int r){
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
 static Context *os_trap(Event ev, Context *ctx){
-    kmt->spin_lock(&irq);
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -51,7 +50,6 @@ static Context *os_trap(Event ev, Context *ctx){
     }
     if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
-    kmt->spin_unlock(&irq);
     return next;
 }
 static void os_on_irq(int seq, int event, handler_t handler){
@@ -86,9 +84,7 @@ static void os_init() {
     hard_test();
 }
 static void os_run() {
-    iset(true);
-    yield();
-    while (1);
+    solver();
 }
 MODULE_DEF(os) = {
     .init=os_init,
