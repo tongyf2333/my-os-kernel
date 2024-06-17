@@ -60,20 +60,20 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
     current_task[cpu_current()]->context=*ctx;
-    
+    current_task[cpu_current()]->status=RUNNABLE;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     kmt->spin_lock(&lock);
     int start=0;
     if(current_task[cpu_current()]->id<cpu_count()){
-        start=cpu_count();
+        start=task_count-1;
         while(1){
             if(tasks[start]!=NULL){
                 if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
             }
-            if(start==task_count-1) start=cpu_count();
-            else start++;
+            if(start==0) start=task_count-1;
+            else start--;
         }
     }
     else{
@@ -83,13 +83,12 @@ static Context *kmt_schedule(Event ev, Context *ctx){
             if(tasks[start]!=NULL){
                 if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
             }
-            if(start==cpu_count()-1) start=0;
+            if(start==task_count-1) start=0;
             else start++;
         }
     }
     //printf("[%d->%d]",current_task[cpu_current()]->id+1,start+1);
     kmt->spin_unlock(&lock);
-    current_task[cpu_current()]->status=RUNNABLE;
     current_task[cpu_current()]=tasks[start];
     current_task[cpu_current()]->status=RUNNING;
     assert(&(current_task[cpu_current()]->context)!=NULL);
