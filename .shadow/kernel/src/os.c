@@ -55,7 +55,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-/*
+
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -65,7 +65,7 @@ static void hard_test(){
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}*/
+}
 /*static void easy_test(){
     kmt->spin_init(&lkk,"lkk");
     kmt->create(task_alloc(),"print",print1,NULL);
@@ -75,9 +75,9 @@ static void os_init() {
     pmm->init();
     kmt->init();
     //printf("QAQ\n");
-    dev->init();
+    //dev->init();
     //easy_test();
-    //hard_test();
+    hard_test();
 }
 static void os_run() {
     solver();
