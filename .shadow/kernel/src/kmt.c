@@ -67,7 +67,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
     kmt->spin_lock(&lock);
     int start=0;
     if(current_task[cpu_current()]->id<cpu_count()){
-        start=(current_task[cpu_current()]->id+1)%task_count;
+        start=0;
         while(1){
             if(tasks[start]!=NULL){
                 if(tasks[start]->status!=BLOCKED&&tasks[start]->status!=RUNNING) break;
