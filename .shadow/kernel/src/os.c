@@ -13,8 +13,8 @@ hand table[1024],temp[1024];
 int cnt=0;
 extern void solver();
 //test semaphore
-void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { /*P(&empty);*/putch('('); /*V(&fill);*/  } }
+void Tconsume(void *arg) { while (1) { /*P(&fill);*/putch(')'); /*V(&empty);*/ } }
 
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
