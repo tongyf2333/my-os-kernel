@@ -40,7 +40,6 @@ static void kmt_spin_lock(spinlock_t *lk){
     while(atomic_xchg(&lk->locked, LOCKED));
     lk->status=tmp;
 }
-
 static void kmt_spin_unlock(spinlock_t *lk){
     assert(!ienabled());
     int tmp=lk->status;
@@ -104,7 +103,11 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     return 0;
 }
 static void kmt_teardown(task_t *task){
-    
+    task->status=DEAD;
+    pmm->free(task->context);
+    task->remain=0;
+    task->next=NULL;
+    task->prev=NULL;
 }
 static void kmt_init(){
     kmt_spin_init(&lock,"lock");
