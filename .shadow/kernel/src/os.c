@@ -5,7 +5,7 @@ sem_t empty, fill;
 #define N 5
 #define NPROD 1
 #define NCONS 1
-extern task_t *tasks[],*current_task[],*wait[];
+extern task_t *tasks[],*current_task[];
 extern int task_count;
 typedef struct hand{
     int seq,event;
@@ -60,7 +60,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-/*
+
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -70,27 +70,24 @@ static void hard_test(){
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-}*/
+}
 
-
+/*
 static void easy_test(){
     kmt->spin_init(&lkk,"lkk");
     kmt->create(task_alloc(),"solve1",solve1,NULL);
     kmt->create(task_alloc(),"solve2",solve2,NULL);
-}
+}*/
 static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
-    easy_test();
-    //hard_test();
+    //easy_test();
+    hard_test();
 }
 static void os_run() {
     iset(true);
-    while (1){
-        yield();
-        wait[cpu_current()]->status=RUNNABLE;
-    }
+    while (1) ;
 }
 MODULE_DEF(os) = {
     .init=os_init,
