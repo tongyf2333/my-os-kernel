@@ -5,22 +5,16 @@ sem_t empty, fill;
 #define N 5
 #define NPROD 4
 #define NCONS 4
-extern task_t *tasks[],*current_task[];
-extern int task_count;
 typedef struct hand{
     int seq,event;
     handler_t handler;
 }hand;
 hand table[1024],temp[1024];
 int cnt=0;
-spinlock_t lkk;
 extern void solver();
 //test semaphore
 void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
-//test spinlock
-void solve1(void *arg){while(1){kmt->spin_lock(&lkk);putch('X');kmt->spin_unlock(&lkk);}}
-void solve2(void *arg){while(1){kmt->spin_lock(&lkk);putch('Y');kmt->spin_unlock(&lkk);}}
 
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
@@ -69,18 +63,10 @@ static void hard_test(){
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
 }
-
-/*
-static void easy_test(){
-    kmt->spin_init(&lkk,"lkk");
-    kmt->create(task_alloc(),"solve1",solve1,NULL);
-    kmt->create(task_alloc(),"solve2",solve2,NULL);
-}*/
 static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
-    //easy_test();
     hard_test();
 }
 static void os_run() {

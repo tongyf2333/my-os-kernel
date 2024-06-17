@@ -39,7 +39,7 @@ struct task{
     int status;
     int remain;
     char name[128];
-    struct Context context;
+    Context *context;
     task_t *next,*prev;
     uint8_t stack[STACK_SIZE];
 };

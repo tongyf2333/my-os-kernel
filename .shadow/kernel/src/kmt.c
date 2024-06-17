@@ -50,7 +50,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 //context saving and scheduling
 static Context *kmt_context_save(Event ev, Context *ctx){
     task_t *task=current_task[cpu_current()];
-    if(task->status==WAIT_AWAKE_SCHEDULE||task->status==RUNNING) task->context=*ctx;
+    if(task->status==WAIT_AWAKE_SCHEDULE||task->status==RUNNING) task->context=ctx;
     else if(task->status==WAIT_LOAD) scheduler[cpu_current()]=ctx;
     return NULL;
 }
@@ -70,7 +70,7 @@ static Context *sched_yield(Event ev,Context *ctx){
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
     task_t *task=current_task[cpu_current()];
-    if(task->status==RUNNING) return &(task->context);
+    if(task->status==RUNNING) return task->context;
     else if(task->status==WAIT_AWAKE_SCHEDULE||task->status==WAIT_SCHEDULE) return scheduler[cpu_current()];
     else return NULL;
 }
@@ -95,7 +95,7 @@ void solve(){while(1);}
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     assert(task!=NULL);
     strcpy(task->name,name);
-    task->context=*kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
+    task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->status=RUNNABLE;
     task->remain=TIMER;
     kmt->spin_lock(&lock);
@@ -116,7 +116,7 @@ static void kmt_init(){
         strcpy(task->name,"handler");
         task->status=WAIT_LOAD;
         task->remain=TIMER;
-        task->context=*kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
+        task->context=kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
         task->prev=task->next=task;
         current_task[i]=task;
     }
