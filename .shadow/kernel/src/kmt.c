@@ -60,7 +60,7 @@ static void kmt_spin_unlock(spinlock_t *lk){
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
     current_task[cpu_current()]->context=*ctx;
-    current_task[cpu_current()]->status=RUNNABLE;
+    if(current_task[cpu_current()]->id<cpu_count()) current_task[cpu_current()]->status=RUNNABLE;
     return NULL;
 }
 static Context *kmt_schedule(Event ev, Context *ctx){
