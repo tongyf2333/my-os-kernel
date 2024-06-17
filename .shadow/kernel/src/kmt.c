@@ -81,7 +81,7 @@ static Context *kmt_schedule(Event ev, Context *ctx){
         start=0;
         while(1){
             if(tasks[start]!=NULL){
-                if(tasks[start]->status!=BLOCKED) break;
+                break;
             }
             if(start==cpu_count()-1) start=0;
             else start++;
