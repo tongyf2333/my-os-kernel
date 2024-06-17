@@ -17,12 +17,6 @@ struct cpu {
 
 extern struct cpu cpus[];
 
-typedef struct queue{
-    task_t *element[QUESIZ];
-    int hd,tl;
-    int cnt;
-}queue_t;
-
 struct spinlock{
     int locked;
     char name[128];
@@ -32,7 +26,6 @@ struct spinlock{
 struct semaphore{
     int count;
     struct spinlock *lk;
-    queue_t *que;
 };
 
 struct task{
