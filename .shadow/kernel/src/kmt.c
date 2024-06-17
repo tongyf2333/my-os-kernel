@@ -9,54 +9,22 @@ struct task *tasks[128];
 struct task *current_task[64];
 spinlock_t lock,irq;
 int task_count=0;
-void enqueue(queue_t *q,task_t *elem){
-    q->element[((q->tl)+1)%QUESIZ]=elem;
-    q->tl=((q->tl)+1)%QUESIZ;
-    q->cnt++;
-}
-task_t *dequeue(queue_t *q){
-    task_t *res=q->element[q->hd];
-    q->hd=((q->hd)+1)%QUESIZ;
-    q->cnt--;
-    return res;
-}
-static struct cpu *mycpu(){return &cpus[cpu_current()];}
-bool holding(spinlock_t *lk) {
-    assert(!ienabled());
-    return (lk->locked == LOCKED &&lk->id==current_task[cpu_current()]->id);
-}
-void push_off(void) {
-    int old = ienabled();
-    iset(false);
-    if(mycpu()->noff == 0)
-        mycpu()->intena = old;
-    mycpu()->noff += 1;
-}
-void pop_off(void) {
-    if(ienabled())
-        panic("pop_off - interruptible");
-    if(mycpu()->noff < 1)
-        panic("pop_off");
-    mycpu()->noff -= 1;
-    if(mycpu()->noff == 0 && mycpu()->intena)
-        iset(true);
-}
-static void kmt_spin_lock(spinlock_t *lk){
-    while(atomic_xchg(&lk->locked, LOCKED)){
-        if(ienabled()) yield();
-    }
-    push_off();
-    lk->id=cpu_current();
-}
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     strcpy(lk->name,name);
     lk->locked=UNLOCKED;
-    lk->id=-1;
 }
+static void kmt_spin_lock(spinlock_t *lk){
+    int tmp=ienabled();
+    iset(false);
+    while(atomic_xchg(&lk->locked, LOCKED));
+    lk->status=tmp;
+}
+
 static void kmt_spin_unlock(spinlock_t *lk){
+    assert(!ienabled());
+    int tmp=lk->status;
     atomic_xchg(&lk->locked, UNLOCKED);
-    lk->id=-1;
-    pop_off();
+    iset(tmp);
 }
 static Context *kmt_context_save(Event ev, Context *ctx){
     current_task[cpu_current()]->context=*ctx;
@@ -106,33 +74,11 @@ static void kmt_sem_wait(sem_t *sem){
             if(ienabled()) yield();
         }
     }
-    /*int acquire=0;
-    kmt_spin_lock(sem->lk);
-    if(sem->count>0){
-        sem->count--;
-        acquire=1;
-    }
-    else{
-        task_t *cur=current_task[cpu_current()];
-        cur->status=BLOCKED;
-        enqueue(sem->que,cur);
-    }
-    kmt_spin_unlock(sem->lk);
-    if(!acquire){
-        if(ienabled()) yield();
-    }*/
 }
 static void kmt_sem_signal(sem_t *sem){
     kmt_spin_lock(sem->lk);
     sem->count++;
     kmt_spin_unlock(sem->lk);
-    /*kmt_spin_lock(sem->lk);
-    if(sem->que->cnt>0){
-        task_t *cur=dequeue(sem->que);
-        cur->status=RUNNABLE;
-    }
-    else sem->count++;
-    kmt_spin_unlock(sem->lk);*/
 }
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
     assert(task!=NULL);
