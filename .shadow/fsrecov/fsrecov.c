@@ -135,7 +135,7 @@ void solve(){
                     long_name[cnt++]='\0';
                     u32 dataClus = dent->DIR_FstClusLO | (dent->DIR_FstClusHI << 16);
                     char *pointer=cluster_to_sec(dataClus);
-                    strncpy(buffer1,pointer+54,dent->DIR_FileSize-54);
+                    strncpy(buffer1,pointer,dent->DIR_FileSize);
                     getsha(buffer1);
                     printf(" %ls\n",long_name);
                 }
