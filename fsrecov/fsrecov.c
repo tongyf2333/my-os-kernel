@@ -7,17 +7,6 @@
 #include <sys/mman.h>
 #include "fat32.h"
 
-typedef struct {
-    uint8_t order;
-    uint16_t name1[5];
-    uint8_t attr;
-    uint8_t type;
-    uint8_t checksum;
-    uint16_t name2[6];
-    uint16_t firstClusterLow;
-    uint16_t name3[2];
-} __attribute__((packed)) LFNEntry;
-
 struct fat32hdr *hdr;
 
 wchar_t long_name[4096];
@@ -26,6 +15,14 @@ LFNEntry *names[256];
 
 void *mmap_disk(const char *fname);
 void dfs_scan(u32 clusId, int depth, int is_dir);
+
+uint8_t calc_checksum(uint8_t *sfn){
+    uint8_t sum = 0;
+    for (int i = 11; i != 0; i--) {
+        sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + *sfn++;
+    }
+    return sum;
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -122,14 +119,9 @@ void dfs_scan(u32 clusId, int depth, int is_dir) {
         if (is_dir) {
             int ndents = hdr->BPB_BytsPerSec * hdr->BPB_SecPerClus / sizeof(struct fat32dent);
 
-            for(int i=0;i<256;i++) names[i]=NULL;
-            int cnt=0;
             for (int d = 0; d < ndents; d++) {
                 struct fat32dent *dent = (struct fat32dent *)cluster_to_sec(clusId) + d;
                 LFNEntry *dt=(LFNEntry*)cluster_to_sec(clusId)+d;
-                if(dt->attr==0xf){
-                    names[dt->order]=dt;
-                }
                 if (dent->DIR_Name[0] == 0x00 ||
                     dent->DIR_Name[0] == 0xe5 ||
                     dent->DIR_Attr & ATTR_HIDDEN)
@@ -140,23 +132,35 @@ void dfs_scan(u32 clusId, int depth, int is_dir) {
 
                 for (int i = 0; i < 4 * depth; i++)
                     putchar(' ');
-                
+
                 if(dt->attr!=0xf){
+                    int cnt=0;
+                    uint8_t checksum=calc_checksum(dent->DIR_Name);
+                    for(int i=0;i<256;i++) names[i]=NULL;
+                    for(int i=d-1;i>=0;i--){
+                        LFNEntry *dtt=(LFNEntry*)cluster_to_sec(clusId)+i;
+                        if(checksum!=dtt->checksum) continue;
+                        if(dtt->attr==0xf){
+                            names[dtt->order]=dtt;
+                        }
+                        if(dtt->name3[1]==0xffff) break;
+                    }
                     for(int i=0;i<256;i++){
                         if(names[i]!=NULL){
                             for(int j=0;j<5;j++) long_name[cnt++]=names[i]->name1[j];
                             for(int j=0;j<6;j++) long_name[cnt++]=names[i]->name2[j];
                             for(int j=0;j<2;j++) long_name[cnt++]=names[i]->name3[j];
-                            long_name[cnt++]='\0';
                         }
                     }
-                    printf("long name:%ls ",long_name);
+                    long_name[cnt++]='\0';
+                    printf("long name:%ls\n",long_name);
                 }
 
                 printf("[%-12s] %6.1lf KiB    ", fname, dent->DIR_FileSize / 1024.0);
 
                 u32 dataClus = dent->DIR_FstClusLO | (dent->DIR_FstClusHI << 16);
                 if (dent->DIR_Attr & ATTR_DIRECTORY) {
+                    
                     printf("\n");
                     if (dent->DIR_Name[0] != '.') {
                         dfs_scan(dataClus, depth + 1, 1);
