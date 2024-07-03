@@ -76,7 +76,7 @@ int getsha(char *begin){
         perror("Error opening file");
         return EXIT_FAILURE;
     }
-    if (fprintf(file, "%s\n", begin) < 0) {
+    if (fprintf(file, "%s", begin) < 0) {
         perror("Error writing to file");
         fclose(file);
         return EXIT_FAILURE;
@@ -86,7 +86,7 @@ int getsha(char *begin){
         return EXIT_FAILURE;
     }
     FILE *fp=popen("sha1sum /tmp/a.txt","r");
-    fscanf(fp,"%s",buf);
+    fscanf(fp,"%40s",buf);
     pclose(fp);
     buf[40]='\0';
     printf("%s ",buf);
@@ -135,7 +135,7 @@ void solve(){
                     long_name[cnt++]='\0';
                     u32 dataClus = dent->DIR_FstClusLO | (dent->DIR_FstClusHI << 16);
                     char *pointer=cluster_to_sec(dataClus);
-                    strncpy(buffer1,pointer,dent->DIR_FileSize);
+                    strncpy(buffer1,pointer+54,dent->DIR_FileSize-54);
                     getsha(buffer1);
                     printf(" %ls\n",long_name);
                 }
