@@ -6,7 +6,7 @@
 #define WAIT_AWAKE 4
 #define WAIT_AWAKE_SCHEDULE 5
 #define DEAD 6
-#define TIMER 5
+#define TIMER 1
 #define QUESIZ 1024
 #define STACK_SIZE 32768
 
