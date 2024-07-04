@@ -62,6 +62,11 @@ typedef struct {
     uint16_t name3[2];
 } __attribute__((packed)) LFNEntry;
 
+typedef struct{
+    uint16_t magic;
+    uint32_t size;
+}__attribute__((packed)) bmphead;
+
 #define CLUS_INVALID   0xffffff7
 
 #define ATTR_READ_ONLY 0x01
