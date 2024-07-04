@@ -10,7 +10,7 @@
 struct fat32hdr *hdr;
 wchar_t long_name[4096];
 LFNEntry *names[256];
-char buffer[16*1024*1024],buf[128],buffer1[8*1024*1024];
+char buffer[16*1024*1024],buf[128];
 
 uint8_t calc_checksum(uint8_t *sfn){
     uint8_t sum = 0;
@@ -62,6 +62,7 @@ release:
 }
 
 int getsha(char *begin,int size){
+    assert(begin[0]==0x42&&begin[1]==0x4d);
     char *file_path = "/tmp/a.bin";
     FILE *file = fopen(file_path, "wb");
     fwrite(begin,sizeof(char),size,file);
@@ -77,7 +78,6 @@ void solve(){
     uint32_t first_data_sector = hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32);
     uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
     for (int clusId=2; clusId < total_clusters; clusId ++) {
-        //printf("(%d)",clusId);
         int bmpcnt=0;
         uint8_t *head=(uint8_t*)cluster_to_sec(clusId),*tl=(uint8_t*)cluster_to_sec(clusId+1);
         for(uint8_t *now=head;now<tl;now++){
@@ -115,10 +115,7 @@ void solve(){
                     long_name[cnt++]='\0';
                     u32 dataClus = dent->DIR_FstClusLO | (dent->DIR_FstClusHI << 16);
                     char *pointer=cluster_to_sec(dataClus);
-                    bmphead *head=cluster_to_sec(dataClus);
-                    memset(buffer1,0,sizeof(buffer1));
-                    strncpy(buffer1,pointer,head->size);
-                    getsha(buffer1,dent->DIR_FileSize);
+                    getsha(pointer,dent->DIR_FileSize);
                     printf(" %ls\n",long_name);
                 }
             }
