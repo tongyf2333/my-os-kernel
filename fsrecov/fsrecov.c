@@ -10,8 +10,8 @@
 struct fat32hdr *hdr;
 wchar_t long_name[4096];
 LFNEntry *names[256];
-int *status;
-char buffer[8*1024*1024],buf[128],buffer1[4*1024*1024];
+int clussiz;
+char buffer[16*1024*1024],buf[128];
 
 uint8_t calc_checksum(uint8_t *sfn){
     uint8_t sum = 0;
@@ -22,9 +22,6 @@ uint8_t calc_checksum(uint8_t *sfn){
 }
 
 void *cluster_to_sec(int n) {
-    // RTFM: Sec 3.5 and 4 (TRICKY)
-    // Don't copy code. Write your own.
-
     u32 DataSec = hdr->BPB_RsvdSecCnt + hdr->BPB_NumFATs * hdr->BPB_FATSz32;
     DataSec += (n - 2) * hdr->BPB_SecPerClus;
     return ((char *)hdr) + DataSec * hdr->BPB_BytsPerSec;
@@ -52,13 +49,6 @@ void *mmap_disk(const char *fname) {
     assert(hdr->Signature_word == 0xaa55); // this is an MBR
     assert(hdr->BPB_TotSec32 * hdr->BPB_BytsPerSec == size);
 
-    /*printf("%s: DOS/MBR boot sector, ", fname);
-    printf("OEM-ID \"%s\", ", hdr->BS_OEMName);
-    printf("sectors/cluster %d, ", hdr->BPB_SecPerClus);
-    printf("sectors %d, ", hdr->BPB_TotSec32);
-    printf("sectors %d, ", hdr->BPB_TotSec32);
-    printf("sectors/FAT %d, ", hdr->BPB_FATSz32);
-    printf("serial number 0x%x\n", hdr->BS_VolID);*/
     return hdr;
 
 release:
@@ -69,26 +59,24 @@ release:
     exit(1);
 }
 
-int getsha(char *begin){
-    const char *file_path = "/tmp/a.txt";
-    FILE *file = fopen(file_path, "w");
-    if (file == NULL) {
-        perror("Error opening file");
-        return EXIT_FAILURE;
+int veclen(char *a,char *b){
+    int sum=0;
+    for(int i=0;i<clussiz;i++){
+        sum+=((*a)-(*b))*((*a)-(*b));
     }
-    if (fprintf(file, "%s\n", begin) < 0) {
-        perror("Error writing to file");
-        fclose(file);
-        return EXIT_FAILURE;
-    }
-    if (fclose(file) != 0) {
-        perror("Error closing file");
-        return EXIT_FAILURE;
-    }
-    FILE *fp=popen("sha1sum /tmp/a.txt","r");
-    fscanf(fp,"%s",buf);
+    return sum;
+}
+
+int getsha(char *begin,int size){
+    assert(begin[0]==0x42&&begin[1]==0x4d);
+    char *file_path = "/tmp/a.bin";
+    int written=0;
+    FILE *file = fopen(file_path, "wb");
+    fwrite(begin,sizeof(char),size,file);
+    fclose(file);
+    FILE *fp=popen("sha1sum /tmp/a.bin","r");
+    fscanf(fp,"%40s",buf);
     pclose(fp);
-    buf[40]='\0';
     printf("%s ",buf);
     return 0;
 }
@@ -96,7 +84,7 @@ int getsha(char *begin){
 void solve(){
     uint32_t first_data_sector = hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32);
     uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
-    status=malloc((total_clusters+1)*sizeof(int));
+    clussiz=hdr->BPB_BytsPerSec*hdr->BPB_SecPerClus;
     for (int clusId=2; clusId < total_clusters; clusId ++) {
         int bmpcnt=0;
         uint8_t *head=(uint8_t*)cluster_to_sec(clusId),*tl=(uint8_t*)cluster_to_sec(clusId+1);
@@ -135,8 +123,7 @@ void solve(){
                     long_name[cnt++]='\0';
                     u32 dataClus = dent->DIR_FstClusLO | (dent->DIR_FstClusHI << 16);
                     char *pointer=cluster_to_sec(dataClus);
-                    strncpy(buffer1,pointer,dent->DIR_FileSize);
-                    getsha(buffer1);
+                    getsha(pointer,dent->DIR_FileSize);
                     printf(" %ls\n",long_name);
                 }
             }
