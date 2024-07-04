@@ -10,6 +10,7 @@
 struct fat32hdr *hdr;
 wchar_t long_name[4096];
 LFNEntry *names[256];
+int clussiz;
 char buffer[16*1024*1024],buf[128];
 
 uint8_t calc_checksum(uint8_t *sfn){
@@ -21,9 +22,6 @@ uint8_t calc_checksum(uint8_t *sfn){
 }
 
 void *cluster_to_sec(int n) {
-    // RTFM: Sec 3.5 and 4 (TRICKY)
-    // Don't copy code. Write your own.
-
     u32 DataSec = hdr->BPB_RsvdSecCnt + hdr->BPB_NumFATs * hdr->BPB_FATSz32;
     DataSec += (n - 2) * hdr->BPB_SecPerClus;
     return ((char *)hdr) + DataSec * hdr->BPB_BytsPerSec;
@@ -61,9 +59,18 @@ release:
     exit(1);
 }
 
+int veclen(char *a,char *b){
+    int sum=0;
+    for(int i=0;i<clussiz;i++){
+        sum+=((*a)-(*b))*((*a)-(*b));
+    }
+    return sum;
+}
+
 int getsha(char *begin,int size){
     assert(begin[0]==0x42&&begin[1]==0x4d);
     char *file_path = "/tmp/a.bin";
+    int written=0;
     FILE *file = fopen(file_path, "wb");
     fwrite(begin,sizeof(char),size,file);
     fclose(file);
@@ -77,6 +84,7 @@ int getsha(char *begin,int size){
 void solve(){
     uint32_t first_data_sector = hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32);
     uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
+    clussiz=hdr->BPB_BytsPerSec*hdr->BPB_SecPerClus;
     for (int clusId=2; clusId < total_clusters; clusId ++) {
         int bmpcnt=0;
         uint8_t *head=(uint8_t*)cluster_to_sec(clusId),*tl=(uint8_t*)cluster_to_sec(clusId+1);
