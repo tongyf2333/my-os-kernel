@@ -77,6 +77,7 @@ static void tty_reader(void *arg) {
     char cmd[128];
     printf("(%s) $ ", arg);
     while (1) {
+        print1("QAQ\n");
         //tty->ops->write(tty, 0, ps, strlen(ps));
         int nread = tty->ops->read(tty, 0, cmd, sizeof(cmd) - 1);
         cmd[nread] = '\0';
