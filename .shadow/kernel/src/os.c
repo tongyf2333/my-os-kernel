@@ -1,4 +1,5 @@
 #include <common.h>
+#include <devices.h>
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
@@ -55,6 +56,18 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
+static void tty_reader(void *arg) {
+    struct device *tty = dev->lookup(arg);
+    char cmd[128], resp[128], ps[16];
+    snprintf(ps, 16, "(%s) $ ", arg);
+    while (1) {
+        tty->ops->write(tty, 0, ps, strlen(ps));
+        int nread = tty->ops->read(tty, 0, cmd, sizeof(cmd) - 1);
+        cmd[nread] = '\0';
+        sprintf(resp, "tty reader task: got %d character(s).\n", strlen(cmd));
+        tty->ops->write(tty, 0, resp, strlen(resp));
+    }
+}
 /*
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
@@ -74,9 +87,11 @@ static void hard_test(){
 static void os_init() {
     pmm->init();
     kmt->init();
-    //dev->init();
+    dev->init();
     //easy_test();
     //hard_test();
+    kmt->create(task_alloc(), "tty_reader", tty_reader, "tty1");
+    kmt->create(task_alloc(), "tty_reader", tty_reader, "tty2");
 }
 static void os_run() {
     solver();
