@@ -96,11 +96,84 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
 }
 
 int sprintf(char *out, const char *fmt, ...) {
-  panic("Not implemented");
+  va_list args;
+    va_start(args, fmt);
+
+    const char *p = fmt;
+    char *buf_ptr = out;
+
+    while (*p != '\0') {
+        if (*p == '%') {
+            p++;
+            if (*p == 'd') {
+                int i = va_arg(args, int);
+                buf_ptr += sprintf(buf_ptr, "%d", i);
+            } else if (*p == 's') {
+                char *s = va_arg(args, char*);
+                buf_ptr += sprintf(buf_ptr, "%s", s);
+            } else {
+                // 如果不是支持的格式说明符，则直接复制字符
+                *buf_ptr++ = '%';
+                *buf_ptr++ = *p;
+            }
+        } else {
+            *buf_ptr++ = *p;
+        }
+        p++;
+    }
+
+    *buf_ptr = '\0';  // 确保结果字符串以空字符结尾
+
+    va_end(args);
+    return buf_ptr - out;
 }
 
 int snprintf(char *out, size_t n, const char *fmt, ...) {
-  panic("Not implemented");
+  va_list args;
+    va_start(args, fmt);
+
+    const char *p = fmt;
+    char *buf_ptr = out;
+    size_t remaining = n;
+
+    while (*p != '\0' && remaining > 1) {  // 保留一个字符位置用于终止符
+        if (*p == '%') {
+            p++;
+            if (*p == 'd') {
+                int i = va_arg(args, int);
+                int len = snprintf(buf_ptr, remaining, "%d", i);
+                if (len >= remaining) len = remaining - 1;
+                buf_ptr += len;
+                remaining -= len;
+            } else if (*p == 's') {
+                char *s = va_arg(args, char*);
+                int len = snprintf(buf_ptr, remaining, "%s", s);
+                if (len >= remaining) len = remaining - 1;
+                buf_ptr += len;
+                remaining -= len;
+            } else {
+                // 如果不是支持的格式说明符，则直接复制字符
+                if (remaining > 2) { // 确保有足够的空间
+                    *buf_ptr++ = '%';
+                    *buf_ptr++ = *p;
+                    remaining -= 2;
+                } else {
+                    break; // 没有足够的空间来放置更多字符
+                }
+            }
+        } else {
+            *buf_ptr++ = *p;
+            remaining--;
+        }
+        p++;
+    }
+
+    if (remaining > 0) {
+        *buf_ptr = '\0';  // 确保结果字符串以空字符结尾
+    }
+
+    va_end(args);
+    return buf_ptr - out;
 }
 
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
