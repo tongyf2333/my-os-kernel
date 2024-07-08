@@ -62,6 +62,7 @@ static void tty_reader(void *arg) {
     printf("QQQ\n");
     char cmd[128], resp[128], ps[16];
     snprintf(ps, 16, "(%s) $ ", arg);
+    printf("111\n");
     while (1) {
         printf("QAQ");
         tty->ops->write(tty, 0, ps, strlen(ps));
