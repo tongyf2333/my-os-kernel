@@ -57,6 +57,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     merge(1,cnt);
 }
 static void tty_reader(void *arg) {
+    printf("QAQ");
     struct device *tty = dev->lookup(arg);
     char cmd[128], resp[128], ps[16];
     snprintf(ps, 16, "(%s) $ ", arg);
