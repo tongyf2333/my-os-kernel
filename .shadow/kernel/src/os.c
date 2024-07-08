@@ -72,12 +72,26 @@ static void hard_test(){
     kmt->create(task_alloc(),"print",print1,NULL);
     kmt->create(task_alloc(),"print",print2,NULL);
 }*/
+static void tty_reader(void *arg) {
+    device_t *tty = dev->lookup(arg);
+    char cmd[128];
+    printf("(%s) $ ", arg);
+    while (1) {
+        //tty->ops->write(tty, 0, ps, strlen(ps));
+        int nread = tty->ops->read(tty, 0, cmd, sizeof(cmd) - 1);
+        cmd[nread] = '\0';
+        printf("tty reader task: got %d character(s).\n", strlen(cmd));
+        //tty->ops->write(tty, 0, resp, strlen(resp));
+    }
+}
 static void os_init() {
     pmm->init();
     kmt->init();
     dev->init();
     //easy_test();
     //hard_test();
+    kmt->create(task_alloc(), "tty_reader", tty_reader, "tty1");
+    kmt->create(task_alloc(), "tty_reader", tty_reader, "tty2");
 }
 static void os_run() {
     solver();
