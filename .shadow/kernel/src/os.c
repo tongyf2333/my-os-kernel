@@ -69,7 +69,7 @@ static void hard_test(){
     }
     task_t *aaa=task_alloc();
     kmt->create(aaa,"fault",add,NULL);
-    kmt->teardown(aaa);
+    //kmt->teardown(aaa);
 }
 
 static void os_init() {
