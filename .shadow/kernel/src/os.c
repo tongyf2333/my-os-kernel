@@ -4,8 +4,8 @@ sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 10
-#define NPROD 4
-#define NCONS 7
+#define NPROD 1
+#define NCONS 1
 typedef struct hand{
     int seq,event;
     handler_t handler;
@@ -14,8 +14,8 @@ hand table[1024],temp[1024];
 int cnt=0;
 extern void solver();
 //test semaphore
-void Tproduce(void *arg) { while (1) { P(&empty);/*printf("[producer on %d]",cpu_current()+1);*/putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);/*printf("[consumer on %d]",cpu_current()+1);*/putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);printf("[producer on %d]",cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);printf("[consumer on %d]",cpu_current()+1);putch(')'); V(&empty); } }
 //test spinlock
 spinlock_t lkk;
 void print1(){while(1){kmt->spin_lock(&lkk);putch('(');kmt->spin_unlock(&lkk);}}
