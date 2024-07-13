@@ -17,6 +17,11 @@ static void insert(task_t *head,task_t *task){
     prev->next=task;
     next->prev=task;
 }
+static void delete(task_t *head){
+    task_t *fwd=head->prev,*nxt=head->next;
+    fwd->next=nxt;
+    nxt->prev=fwd;
+}
 //spinlock
 static void kmt_spin_init(spinlock_t *lk, const char *name){
     strcpy(lk->name,name);
@@ -91,11 +96,10 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     return 0;
 }
 static void kmt_teardown(task_t *task){
-    task->status=DEAD;
-    pmm->free(task->context);
-    task->remain=0;
-    task->next=NULL;
-    task->prev=NULL;
+    kmt->spin_lock(&lock);
+    delete(task);
+    pmm->free(task);
+    kmt->spin_unlock(&lock);
 }
 static void kmt_init(){
     kmt_spin_init(&lock,"lock");
