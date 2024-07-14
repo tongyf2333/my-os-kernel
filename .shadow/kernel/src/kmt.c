@@ -18,11 +18,13 @@ static void insert(task_t *head,task_t *task){
     task->prev=prev,task->next=next;
     prev->next=task;
     next->prev=task;
+    task_count++;
 }
 static void delete(task_t *head){
     task_t *fwd=head->prev,*nxt=head->next;
     fwd->next=nxt;
     nxt->prev=fwd;
+    task_count--;
 }
 //spinlock
 static void kmt_spin_init(spinlock_t *lk, const char *name){
@@ -97,7 +99,6 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->remain=TIMER;
     task->last_cpu=-1;
     task->id=++taskcnt;
-    task_count++;
     kmt->spin_lock(&lock);
     insert(current_task[cpu_current()],task);
     kmt->spin_unlock(&lock);
@@ -120,7 +121,6 @@ static void kmt_init(){
         task->remain=TIMER;
         task->last_cpu=-1;
         task->context=kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
-        task_count++;
         task->prev=task->next=task;
         current_task[i]=task;
     }
