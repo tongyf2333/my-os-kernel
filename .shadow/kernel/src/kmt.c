@@ -10,6 +10,7 @@ struct task *current_task[64];
 Context *scheduler[64];
 spinlock_t lock;
 int task_count=0;
+int taskcnt=0;
 //linklist
 static void insert(task_t *head,task_t *task){
     task_t *prev=head,*next=prev->next;
@@ -92,6 +93,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->status=RUNNABLE;
     task->remain=TIMER;
     task->last_cpu=-1;
+    task->id=++taskcnt;
     kmt->spin_lock(&lock);
     insert(current_task[cpu_current()],task);
     kmt->spin_unlock(&lock);
