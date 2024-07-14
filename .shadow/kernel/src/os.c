@@ -16,8 +16,8 @@ extern void solver();
 extern struct task *current_task[];
 //test semaphore
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
-void Tproduce(void *arg) { while (1) { P(&empty);printf("[%d]",current_task[cpu_current()]->id);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);printf("[%d]",current_task[cpu_current()]->id);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);printf("[%d at cpu %d]",current_task[cpu_current()]->id,cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);printf("[%d at cpu %d]",current_task[cpu_current()]->id,cpu_current()+1);putch(')'); V(&empty); } }
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
