@@ -115,6 +115,7 @@ static void kmt_init(){
         strcpy(task->name,"handler");
         task->status=WAIT_LOAD;
         task->remain=TIMER;
+        task->last_cpu=-1;
         task->context=kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
         task->prev=task->next=task;
         current_task[i]=task;
