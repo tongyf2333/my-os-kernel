@@ -79,7 +79,7 @@ void solver(){
         kmt_spin_lock(&lock);
         task=task->prev;
         for(int i=1;i<=stepcnt;i++) task=task->prev;
-        stepcnt=(stepcnt+1)%taskcnt;
+        stepcnt=(stepcnt+1)%task_count;
         while(task->status!=RUNNABLE/*&&task->last_cpu==cpu_current()*/) task=task->prev;
         task->status=WAIT_LOAD;
         task->remain=TIMER;
@@ -97,6 +97,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->remain=TIMER;
     task->last_cpu=-1;
     task->id=++taskcnt;
+    task_count++;
     kmt->spin_lock(&lock);
     insert(current_task[cpu_current()],task);
     kmt->spin_unlock(&lock);
@@ -119,6 +120,7 @@ static void kmt_init(){
         task->remain=TIMER;
         task->last_cpu=-1;
         task->context=kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
+        task_count++;
         task->prev=task->next=task;
         current_task[i]=task;
     }
