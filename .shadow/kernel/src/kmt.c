@@ -11,6 +11,7 @@ Context *scheduler[64];
 spinlock_t lock;
 int task_count=0;
 int taskcnt=0;
+int stepcnt=0;
 //linklist
 static void insert(task_t *head,task_t *task){
     task_t *prev=head,*next=prev->next;
@@ -77,6 +78,8 @@ void solver(){
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
         task=task->prev;
+        for(int i=1;i<=stepcnt;i++) task=task->prev;
+        stepcnt=(stepcnt+1)%taskcnt;
         while(task->status!=RUNNABLE/*&&task->last_cpu==cpu_current()*/) task=task->prev;
         task->status=WAIT_LOAD;
         task->remain=TIMER;
