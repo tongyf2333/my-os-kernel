@@ -31,6 +31,7 @@ struct semaphore{
 struct task{
     int status;
     int remain;
+    int last_cpu;
     char name[128];
     Context *context;
     task_t *next,*prev;

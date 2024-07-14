@@ -106,7 +106,6 @@ static void kmt_init(){
     for(int i=0;i<cpu_count();i++){
         current_task[i]=pmm->alloc(sizeof(task_t*));
         scheduler[i]=pmm->alloc(sizeof(Context*));
-
         task_t *task=pmm->alloc(sizeof(task_t));
         strcpy(task->name,"handler");
         task->status=WAIT_LOAD;
