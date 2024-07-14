@@ -3,9 +3,9 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 2
-#define NPROD 5
-#define NCONS 5
+#define N 1
+#define NPROD 1
+#define NCONS 1
 typedef struct hand{
     int seq,event;
     handler_t handler;
