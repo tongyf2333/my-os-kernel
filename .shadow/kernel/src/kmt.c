@@ -78,7 +78,7 @@ void solver(){
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
         task=task->prev;
-        int cur=total%cpu_count();
+        int cur=total%(cpu_count()+1);
         while(cur>0) task=task->prev,cur--;
         total++;
         while(task->status!=RUNNABLE) task=task->prev;
