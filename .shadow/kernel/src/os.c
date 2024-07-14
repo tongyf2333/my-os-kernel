@@ -5,7 +5,7 @@ sem_t empty, fill;
 #define V kmt->sem_signal
 #define N 1
 #define NPROD 4
-#define NCONS 7
+#define NCONS 4
 typedef struct hand{
     int seq,event;
     handler_t handler;
@@ -13,10 +13,11 @@ typedef struct hand{
 hand table[1024],temp[1024];
 int cnt=0;
 extern void solver();
+extern struct task *current_task[];
 //test semaphore
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
-void Tproduce(void *arg) { while (1) { P(&empty);/*printf("[producer on %d]",cpu_current()+1);*/putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);/*printf("[consumer on %d]",cpu_current()+1);*/putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);printf("[%d]",current_task[cpu_current()]->id);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);printf("[%d]",current_task[cpu_current()]->id);putch(')'); V(&empty); } }
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
