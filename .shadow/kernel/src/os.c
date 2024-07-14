@@ -3,7 +3,7 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 10
+#define N 1
 #define NPROD 4
 #define NCONS 7
 typedef struct hand{
