@@ -17,13 +17,6 @@ extern void solver();
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 void Tproduce(void *arg) { while (1) { P(&empty);/*printf("[producer on %d]",cpu_current()+1);*/putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);/*printf("[consumer on %d]",cpu_current()+1);*/putch(')'); V(&empty); } }
-void add(void *arg){while(1){putch('A');}}
-void del(void *arg){
-    task_t *b=task_alloc();
-    kmt->create(b,"fuck",add,NULL);
-    kmt->teardown(b);
-    while(1);
-}
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
@@ -69,10 +62,6 @@ static void hard_test(){
     for (int i = 0; i < NCONS; i++) {
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
-    task_t *aaa=task_alloc();
-    kmt->create(aaa,"fault",add,NULL);
-    kmt->teardown(aaa);
-    kmt->create(task_alloc(),"test",del,NULL);
 }
 
 static void os_init() {
