@@ -80,7 +80,11 @@ void solver(){
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
         task=task->prev;
-        for(int i=1;i<=stepcnt;i++) task=task->prev;
+        int i=1;
+        for(;i<=stepcnt;){
+            if(task->status==RUNNABLE) i++;
+            task=task->prev;
+        }
         stepcnt=(stepcnt+1)%task_count;
         while(task->status!=RUNNABLE/*&&task->last_cpu==cpu_current()*/) task=task->prev;
         task->status=WAIT_LOAD;
