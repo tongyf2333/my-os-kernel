@@ -11,7 +11,6 @@ Context *scheduler[64];
 spinlock_t lock;
 int task_count=0;
 int taskcnt=0;
-int total=0;
 //linklist
 static void insert(task_t *head,task_t *task){
     task_t *prev=head,*next=prev->next;
@@ -78,12 +77,10 @@ void solver(){
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
         task=task->prev;
-        int cur=total%taskcnt;
-        while(cur>0) task=task->prev,cur--;
-        total++;
-        while(task->status!=RUNNABLE) task=task->prev;
+        while(task->status!=RUNNABLE&&cpu_current()==task->last_cpu) task=task->prev;
         task->status=WAIT_LOAD;
         task->remain=TIMER;
+        task->last_cpu=cpu_current();
         kmt_spin_unlock(&lock);
         current_task[cpu_current()]=task;
     }
@@ -96,6 +93,7 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->status=RUNNABLE;
     task->remain=TIMER;
     task->id=++taskcnt;
+    task->last_cpu=-1;
     kmt->spin_lock(&lock);
     insert(current_task[cpu_current()],task);
     kmt->spin_unlock(&lock);
