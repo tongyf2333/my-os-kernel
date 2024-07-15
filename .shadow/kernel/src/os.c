@@ -44,7 +44,7 @@ static Context *os_trap(Event ev, Context *ctx){
         }
     }
     //if(!next) printf("event:%d\n",ev.event+1);
-    //panic_on(!next, "return to NULL context");
+    panic_on(!next, "return to NULL context");
     return next;
 }
 static void os_on_irq(int seq, int event, handler_t handler){
