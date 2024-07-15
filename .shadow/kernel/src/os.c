@@ -43,7 +43,7 @@ static Context *os_trap(Event ev, Context *ctx){
             if (r!=NULL) next = r;
         }
     }
-    if(!next) printf("event:%d\n",ev.event+1);
+    //if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
     return next;
 }
