@@ -90,14 +90,14 @@ static void sem_init(sem_t *sem, const char *name, int value) {
     sem->count = value;
     sem->waiting_tasks_len = 0;
     sem->lk = pmm->alloc(sizeof(spinlock_t));
-    kspin_init(sem->lk, name);
+    spin_init(sem->lk, name);
     sem->waiting_tasks = pmm->alloc(MAX_TASK_NUM * sizeof(task_t * ));
     memset(sem->waiting_tasks, 0, sizeof(MAX_TASK_NUM * sizeof(task_t * )));
     pthread_mutex_unlock(&ksem);
 }
 
 static void sem_wait(sem_t *sem) {
-    kspin_lock(sem->lk);
+    spin_lock(sem->lk);
     sem->count--;
     if (sem->count < 0) {
         int cpu_id = cpu_current();
@@ -106,14 +106,14 @@ static void sem_wait(sem_t *sem) {
             current[cpu_id]->block = 1;
         }
     }
-    kspin_unlock(sem->lk);
+    spin_unlock(sem->lk);
     if (sem->count < 0) {
         yield();
     }
 }
 
 static void sem_signal(sem_t *sem) {
-    kspin_lock(sem->lk);
+    spin_lock(sem->lk);
     sem->count++;
     if (sem->count <= 0 && sem->waiting_tasks_len > 0) {//randomly choose a thread waiting this sem
         int r = rand() % sem->waiting_tasks_len;
@@ -122,7 +122,7 @@ static void sem_signal(sem_t *sem) {
             sem->waiting_tasks[i] = sem->waiting_tasks[i + 1];
         sem->waiting_tasks_len--;
     }
-    kspin_unlock(sem->lk);
+    spin_unlock(sem->lk);
 }
 //thread management
 static void idle(void *arg) {while (1);}
