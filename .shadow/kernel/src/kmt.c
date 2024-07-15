@@ -12,9 +12,9 @@ spinlock_t lock;
 int task_count=0;
 int taskcnt=0;
 int stepcnt=0;
-int rnd=1;
-int rand(){
-    rnd=48271*rnd%((1<<30)-1);
+long rnd=1;
+long getrand(){
+    rnd=48271*rnd%((1ll<<31)-1);
     return rnd;
 }
 //linklist
@@ -86,7 +86,7 @@ void solver(){
         kmt_spin_lock(&lock);
         task=task->prev;
         int i=1;
-        stepcnt=rand()%task_count;
+        stepcnt=getrand()%task_count;
         for(;i<=stepcnt;){
             if(task->status==RUNNABLE) i++;
             task=task->prev;
