@@ -43,7 +43,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     lk->status=tmp;
 }
 static void kmt_spin_unlock(spinlock_t *lk){
-    //assert(!ienabled());
+    assert(!ienabled());
     int tmp=lk->status;
     atomic_xchg(&lk->locked, UNLOCKED);
     iset(tmp);
