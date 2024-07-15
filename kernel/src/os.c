@@ -3,7 +3,7 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 1
+#define N 5
 #define NPROD 1
 #define NCONS 1
 typedef struct hand{
@@ -16,6 +16,7 @@ int cnt=0;
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 void Tproduce(void *arg) { while (1) { P(&empty);printf("[producer on cpu %d]",cpu_current()+1);putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);printf("[consumer on cpu %d]",cpu_current()+1);putch(')'); V(&empty); } }
+//sorting handlers
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
@@ -31,17 +32,18 @@ void merge(int l,int r){
 	while(tl<=r) temp[now++]=table[tl++];
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
+//os module
 static Context *os_trap(Event ev, Context *ctx){
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
-            //panic_on(r && next, "returning multiple contexts");
+            panic_on(r && next, "returning multiple contexts");
             if (r!=NULL) next = r;
         }
     }
-    //if(!next) printf("event:%d\n",ev.event+1);
+    if(!next) printf("event:%d\n",ev.event+1);
     panic_on(!next, "return to NULL context");
     return next;
 }
