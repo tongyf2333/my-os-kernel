@@ -215,7 +215,7 @@ static void kmt_init() {
     kspin_unlock_lock = 0;
     ksem = 0;
     for (int i = 0; i < cpu_count(); i++) {
-        idles[i] = pmm->alloc(4096);
+        idles[i] = pmm->alloc(sizeof(task_t));
         idles[i]->id = -1;
         memset(idles[i]->name, '\0', sizeof(idles[i]->name));
         strcpy(idles[i]->name, "IDLE");
