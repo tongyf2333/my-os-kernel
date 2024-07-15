@@ -12,6 +12,11 @@ spinlock_t lock;
 int task_count=0;
 int taskcnt=0;
 int stepcnt=0;
+int rnd=1;
+int rand(){
+    rnd=48271*rnd%((1<<30)-1);
+    return rnd;
+}
 //linklist
 static void insert(task_t *head,task_t *task){
     task_t *prev=head,*next=prev->next;
@@ -81,11 +86,11 @@ void solver(){
         kmt_spin_lock(&lock);
         task=task->prev;
         int i=1;
+        stepcnt=rand()%task_count;
         for(;i<=stepcnt;){
             if(task->status==RUNNABLE) i++;
             task=task->prev;
         }
-        stepcnt=(stepcnt+1)%task_count;
         while(task->status!=RUNNABLE/*&&task->last_cpu==cpu_current()*/) task=task->prev;
         task->status=WAIT_LOAD;
         task->remain=TIMER;
