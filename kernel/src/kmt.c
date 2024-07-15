@@ -13,26 +13,17 @@ static pthread_mutex kspin_lock_lock;
 static pthread_mutex kspin_unlock_lock;
 static pthread_mutex ksem;
 
-
+//mini spinlock
 inline intptr_t katomic_xchg(volatile pthread_mutex *addr, intptr_t newval) {
     intptr_t result;
     asm volatile ("lock xchg %0, %1":
     "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
     return result;
 }
-
-inline void pthread_mutex_lock(pthread_mutex *lock) {
-    while (katomic_xchg(lock, 1));
-}
-
-inline void pthread_mutex_unlock(pthread_mutex *lock) {
-    asm volatile("movl $0, %0" : "+m" (*lock) : );
-}
-
-inline int pthread_mutex_trylock(pthread_mutex *lock) {
-    return katomic_xchg(lock, 1);
-}
-
+inline void pthread_mutex_lock(pthread_mutex *lock) {while (katomic_xchg(lock, 1));}
+inline void pthread_mutex_unlock(pthread_mutex *lock) {asm volatile("movl $0, %0" : "+m" (*lock) : );}
+inline int pthread_mutex_trylock(pthread_mutex *lock) {return katomic_xchg(lock, 1);}
+//spinlock
 void pushcli() {
     iset(false);
     int cpu_id = cpu_current();
@@ -59,7 +50,7 @@ static int holding(spinlock_t *lk) {
     return r;
 }
 
-static void kspin_init(spinlock_t *lk, const char *name) {
+static void spin_init(spinlock_t *lk, const char *name) {
     pthread_mutex_lock(&kspin);
     memset(lk->name,0, sizeof(lk->name));
     strcpy(lk->name, name);
@@ -68,7 +59,7 @@ static void kspin_init(spinlock_t *lk, const char *name) {
     pthread_mutex_unlock(&kspin);
 }
 
-static void kspin_lock(spinlock_t *lk) {
+static void spin_lock(spinlock_t *lk) {
     pushcli();
     if(holding(lk)) {
         char *info = pmm->alloc(sizeof(MAX_CHAR_LEN));
@@ -80,7 +71,7 @@ static void kspin_lock(spinlock_t *lk) {
     lk->cpu = cpu_current();
 }
 
-static void kspin_unlock(spinlock_t *lk) {
+static void spin_unlock(spinlock_t *lk) {
     if(!holding(lk)) {
         char *info = pmm->alloc(sizeof(MAX_CHAR_LEN));
         strcpy(info, lk->name);
@@ -91,8 +82,8 @@ static void kspin_unlock(spinlock_t *lk) {
     pthread_mutex_unlock(&lk->locked);
     popcli();
 }
-
-static void ksem_init(sem_t *sem, const char *name, int value) {
+//semaphore
+static void sem_init(sem_t *sem, const char *name, int value) {
     pthread_mutex_lock(&ksem);
     memset(sem->name,0, sizeof(sem->name));
     strcpy(sem->name, name);
@@ -105,7 +96,7 @@ static void ksem_init(sem_t *sem, const char *name, int value) {
     pthread_mutex_unlock(&ksem);
 }
 
-static void ksem_wait(sem_t *sem) {
+static void sem_wait(sem_t *sem) {
     kspin_lock(sem->lk);
     sem->count--;
     if (sem->count < 0) {
@@ -121,7 +112,7 @@ static void ksem_wait(sem_t *sem) {
     }
 }
 
-static void ksem_signal(sem_t *sem) {
+static void sem_signal(sem_t *sem) {
     kspin_lock(sem->lk);
     sem->count++;
     if (sem->count <= 0 && sem->waiting_tasks_len > 0) {//randomly choose a thread waiting this sem
@@ -133,12 +124,10 @@ static void ksem_signal(sem_t *sem) {
     }
     kspin_unlock(sem->lk);
 }
+//thread management
+static void idle(void *arg) {while (1);}
 
-static void idle(void *arg) {
-    while (1);
-}
-
-static int kcreate(task_t *task, const char *name, void (*entry)(void *), void *arg) {
+static int create(task_t *task, const char *name, void (*entry)(void *), void *arg) {
     pthread_mutex_lock(&ktask);
     task->fence1 = FENCE1;
     task->fence2 = FENCE2;
@@ -155,7 +144,7 @@ static int kcreate(task_t *task, const char *name, void (*entry)(void *), void *
     return 0;
 }
 
-static void kteardown(task_t *task) {
+static void teardown(task_t *task) {
     pthread_mutex_lock(&ktask);
     pmm->free(task);
     tasks_len--;
@@ -168,10 +157,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
         current[cpu_id] = idles[cpu_id];
     }
     current[cpu_id]->context = c;
-/**
- * Unlock this state after the interruption is down, otherwise, the stack would be corrupted.
- * One way is unlock the state in the second interruption.
- */
+    //must unlock a thread when out of interrupt
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
         pthread_mutex_unlock(&last[cpu_id]->state);//unlock the last thread(avoid stack data race)
     last[cpu_id] = current[cpu_id];//last[cpuid] means the last thread this cpu runs
@@ -228,12 +214,12 @@ static void kmt_init() {
 
 MODULE_DEF(kmt) = {
     .init  = kmt_init,
-    .create = kcreate,
-    .teardown  = kteardown,
-    .spin_init = kspin_init,
-    .spin_lock = kspin_lock,
-    .spin_unlock = kspin_unlock,
-    .sem_init = ksem_init,
-    .sem_wait = ksem_wait,
-    .sem_signal = ksem_signal
+    .create = create,
+    .teardown  = teardown,
+    .spin_init = spin_init,
+    .spin_lock = spin_lock,
+    .spin_unlock = spin_unlock,
+    .sem_init = sem_init,
+    .sem_wait = sem_wait,
+    .sem_signal = sem_signal
 };
