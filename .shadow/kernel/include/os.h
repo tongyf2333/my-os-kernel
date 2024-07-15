@@ -8,7 +8,7 @@
 #define DEAD 6
 #define TIMER 1
 #define QUESIZ 1024
-#define STACK_SIZE 32768
+#define STACK_SIZE 64*1024
 typedef volatile uintptr_t pthread_mutex;
 
 struct cpu {
