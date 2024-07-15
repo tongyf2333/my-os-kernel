@@ -12,8 +12,8 @@ spinlock_t lock;
 int task_count=0;
 int taskcnt=0;
 int stepcnt=0;
-long rnd=1;
-long getrand(){
+long long rnd=1;
+long long getrand(){
     rnd=48271ll*rnd%((1ll<<31)-1);
     return rnd;
 }
