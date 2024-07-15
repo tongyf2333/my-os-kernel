@@ -10,17 +10,26 @@ struct task *current_task[64];
 Context *scheduler[64];
 spinlock_t lock;
 int task_count=0;
+int taskcnt=0;
+int stepcnt=0;
+int rnd=1;
+int rand(){
+    rnd=48271*rnd%((1<<30)-1);
+    return rnd;
+}
 //linklist
 static void insert(task_t *head,task_t *task){
     task_t *prev=head,*next=prev->next;
     task->prev=prev,task->next=next;
     prev->next=task;
     next->prev=task;
+    task_count++;
 }
 static void delete(task_t *head){
     task_t *fwd=head->prev,*nxt=head->next;
     fwd->next=nxt;
     nxt->prev=fwd;
+    task_count--;
 }
 //spinlock
 static void kmt_spin_init(spinlock_t *lk, const char *name){
@@ -76,9 +85,16 @@ void solver(){
         kmt_spin_unlock(&lock);
         kmt_spin_lock(&lock);
         task=task->prev;
-        while(task->status!=RUNNABLE) task=task->prev;
+        int i=1;
+        stepcnt=rand()%task_count;
+        for(;i<=stepcnt;){
+            if(task->status==RUNNABLE) i++;
+            task=task->prev;
+        }
+        while(task->status!=RUNNABLE/*&&task->last_cpu==cpu_current()*/) task=task->prev;
         task->status=WAIT_LOAD;
         task->remain=TIMER;
+        task->last_cpu=cpu_current();
         kmt_spin_unlock(&lock);
         current_task[cpu_current()]=task;
     }
@@ -90,6 +106,8 @@ static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), 
     task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->status=RUNNABLE;
     task->remain=TIMER;
+    task->last_cpu=-1;
+    task->id=++taskcnt;
     kmt->spin_lock(&lock);
     insert(current_task[cpu_current()],task);
     kmt->spin_unlock(&lock);
@@ -110,6 +128,7 @@ static void kmt_init(){
         strcpy(task->name,"handler");
         task->status=WAIT_LOAD;
         task->remain=TIMER;
+        task->last_cpu=-1;
         task->context=kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
         task->prev=task->next=task;
         current_task[i]=task;
