@@ -157,7 +157,7 @@ static void kmt_sem_wait(sem_t *sem){
         }
         kmt_spin_unlock(sem->lk);
         if(!acquire){
-            if(ienabled()) yield();
+            yield();
         }
     }
 }
