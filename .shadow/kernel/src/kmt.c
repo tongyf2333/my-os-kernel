@@ -118,7 +118,7 @@ static void ksem_wait(sem_t *sem) {
     sem->count--;
     if (sem->count < 0) {
         int cpu_id = cpu_current();
-        if (current[cpu_id]) {
+        if (current[cpu_id]) {//push into the waiting list
             sem->waiting_tasks[sem->waiting_tasks_len++] = current[cpu_id];
             current[cpu_id]->block = 1;
         }
@@ -132,7 +132,7 @@ static void ksem_wait(sem_t *sem) {
 static void ksem_signal(sem_t *sem) {
     kspin_lock(sem->lk);
     sem->count++;
-    if (sem->count <= 0 && sem->waiting_tasks_len > 0) {
+    if (sem->count <= 0 && sem->waiting_tasks_len > 0) {//randomly choose a thread waiting this sem
         int r = rand() % sem->waiting_tasks_len;
         sem->waiting_tasks[r]->block = 0;
         for (int i = r; i < sem->waiting_tasks_len - 1; i++)
@@ -194,9 +194,9 @@ static Context *kmt_schedule(Event ev, Context *c) {
     for (int _ = 0; _ < tasks_len * 10; _++) {
         i = rand() % tasks_len;
         if (!tasks[i]->block && (tasks[i] == current[cpu_id] || !pthread_mutex_trylock(&tasks[i]->state))) {
-            //tasks[i]->block means blocked because waiting sem or spinlock
-            //trylock means trying to get the lock
-
+            //tasks[i]->block means blocked because waiting sem or spinlock.
+            //trylock means trying to get the lock.
+            //go to a thread who doesn't wait on sem/spinlock ,the thread can be the original thread or an unlocked thread.
             task_interrupt = tasks[i];
             break;
         }
