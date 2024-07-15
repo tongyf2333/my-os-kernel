@@ -5,6 +5,8 @@
 #define INT_MAX 255
 #define MAX_TASK_NUM 32
 #define MAX_CHAR_LEN 128
+#define FENCE1 114514233
+#define FENCE2 1919810
 
 struct cpu cpus[MAX_CPU_NUM];
 static task_t *last[MAX_CPU_NUM];
@@ -146,8 +148,8 @@ static void idle(void *arg) {
 
 static int kcreate(task_t *task, const char *name, void (*entry)(void *), void *arg) {
     pthread_mutex_lock(&ktask);
-    task->fence1 = 123456;
-    task->fence2 = 654321;
+    task->fence1 = FENCE1;
+    task->fence2 = FENCE2;
     memset(task->name, '\0', sizeof(task->name));
     strcpy(task->name, name);
     memset(task->stack, '\0', sizeof(task->stack));
@@ -181,7 +183,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
         pthread_mutex_unlock(&last[cpu_id]->state);
     last[cpu_id] = current[cpu_id];
-    //panic_on(current[cpu_id]->fence1 != 123456 || current[cpu_id]->fence2 != 654321, "stackoverflow");
+    panic_on(current[cpu_id]->fence1 != FENCE1 || current[cpu_id]->fence2 != FENCE2, "stackoverflow");
     return NULL;
 }
 
@@ -197,7 +199,7 @@ static Context *kmt_schedule(Event ev, Context *c) {
         }
     }
     current[cpu_id] = task_interrupt;
-    //panic_on(task_interrupt->fence1 != 123456 || task_interrupt->fence2 != 654321, "stackoverflow");
+    panic_on(task_interrupt->fence1 != FENCE1 || task_interrupt->fence2 != FENCE2, "stackoverflow");
     return current[cpu_id]->context;
 }
 
@@ -220,8 +222,8 @@ static void kmt_init() {
         memset(idles[i]->stack, '\0', sizeof(idles[i]->stack));
         idles[i]->context = kcontext((Area) {(void *) idles[i]->stack, (void *) (idles[i]->stack + STACK_SIZE)}, idle, NULL);
         idles[i]->state = 0;
-        idles[i]->fence1 = 123456;
-        idles[i]->fence2 = 654321;
+        idles[i]->fence1 = FENCE1;
+        idles[i]->fence2 = FENCE2;
         current[i] = NULL;
         last[i] = NULL;
         cpus[i].ncli = 0;
