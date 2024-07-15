@@ -8,24 +8,29 @@
 #define DEAD 6
 #define TIMER 1
 #define QUESIZ 1024
-#define STACK_SIZE 32768
+#define STACK_SIZE 64*1024
+typedef volatile uintptr_t pthread_mutex;
 
 struct cpu {
-    int noff;
+    int ncli;
     int intena;
 };
 
 extern struct cpu cpus[];
 
 struct spinlock{
-    int locked;
+    pthread_mutex locked;
     char name[128];
     int status;
+    int cpu;
 };
 
 struct semaphore{
     int count;
+    char *name;
     struct spinlock *lk;
+    volatile int waiting_tasks_len;
+    volatile task_t** waiting_tasks;
 };
 
 struct task{
@@ -36,6 +41,12 @@ struct task{
     char name[128];
     Context *context;
     task_t *next,*prev;
+    uint32_t fence1;
     uint8_t stack[STACK_SIZE];
+    uint32_t fence2;
+    pthread_mutex block;
+    int count;
+    pthread_mutex read_write;
+    pthread_mutex state;
 };
 
