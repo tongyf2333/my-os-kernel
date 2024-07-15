@@ -1,179 +1,242 @@
 #include <common.h>
-#define LOCKED 1
-#define UNLOCKED 0
-#define INT_MIN -2147483647
-#define INT_MAX 2147483647
-typedef struct Context Context;
-struct cpu cpus[64];
-struct task *tasks[128];
-struct task *current_task[64];
-Context *scheduler[64];
-spinlock_t lock;
-int task_count=0;
-int taskcnt=0;
-int stepcnt=0;
-long long rnd=1;
-long long getrand(){
-    rnd=(48271ll*rnd+0ll)%((1ll<<31)-1);
-    return rnd;
+
+#define MAX_CPU_NUM 8
+#define INT_MIN 0
+#define INT_MAX 255
+#define MAX_TASK_NUM 32
+#define MAX_CHAR_LEN 128
+
+struct cpu cpus[MAX_CPU_NUM];
+static task_t *last[MAX_CPU_NUM];
+static task_t *current[MAX_CPU_NUM];
+static task_t *idles[MAX_CPU_NUM];
+static task_t *tasks[MAX_TASK_NUM];
+static unsigned int tasks_len;
+
+static pthread_mutex ktask;
+static pthread_mutex kspin;
+static pthread_mutex kspin_lock_lock;
+static pthread_mutex kspin_unlock_lock;
+static pthread_mutex ksem;
+
+
+inline intptr_t katomic_xchg(volatile pthread_mutex *addr, intptr_t newval) {
+    intptr_t result;
+    asm volatile ("lock xchg %0, %1":
+    "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
+    return result;
 }
-//linklist
-static void insert(task_t *head,task_t *task){
-    task_t *prev=head,*next=prev->next;
-    task->prev=prev,task->next=next;
-    prev->next=task;
-    next->prev=task;
-    task_count++;
+
+inline void pthread_mutex_lock(pthread_mutex *lock) {
+    while (katomic_xchg(lock, 1));
 }
-static void delete(task_t *head){
-    task_t *fwd=head->prev,*nxt=head->next;
-    fwd->next=nxt;
-    nxt->prev=fwd;
-    task_count--;
+
+inline void pthread_mutex_unlock(pthread_mutex *lock) {
+    asm volatile("movl $0, %0" : "+m" (*lock) : );
 }
-//spinlock
-static void kmt_spin_init(spinlock_t *lk, const char *name){
-    strcpy(lk->name,name);
-    lk->locked=UNLOCKED;
+
+inline int pthread_mutex_trylock(pthread_mutex *lock) {
+    return katomic_xchg(lock, 1);
 }
-static void kmt_spin_lock(spinlock_t *lk){
-    int tmp=ienabled();
+
+void pushcli() {
     iset(false);
-    while(atomic_xchg(&lk->locked, LOCKED));
-    lk->status=tmp;
+    int cpu_id = cpu_current();
+    if (cpus[cpu_id].ncli == 0)
+        cpus[cpu_id].intena = ienabled();
+    cpus[cpu_id].ncli += 1;
 }
-static void kmt_spin_unlock(spinlock_t *lk){
-    assert(!ienabled());
-    int tmp=lk->status;
-    atomic_xchg(&lk->locked, UNLOCKED);
-    iset(tmp);
-}
-//context saving and scheduling
-static Context *kmt_context_save(Event ev, Context *ctx){
-    task_t *task=current_task[cpu_current()];
-    if(/*task->status==WAIT_AWAKE_SCHEDULE||*/task->status==RUNNING) task->context=ctx;
-    else if(task->status==WAIT_LOAD) scheduler[cpu_current()]=ctx;
-    return NULL;
-}
-static Context *irq_timer(Event ev,Context *ctx){
-    task_t *task=current_task[cpu_current()];
-    if(task->status==RUNNING){
-        task->remain--;
-        if(task->remain<=0) task->status=WAIT_SCHEDULE;
+
+void popcli() {
+    panic_on(ienabled(), "popcli - interruptible");
+    int cpu_id = cpu_current();
+    panic_on(--cpus[cpu_id].ncli < 0, "popcli");
+    if (!cpus[cpu_id].ncli && !cpus[cpu_id].intena) {
+        cpus[cpu_id].intena = 1;
+        iset(true);
     }
-    return NULL;
 }
-static Context *sched_yield(Event ev,Context *ctx){
-    task_t *task=current_task[cpu_current()];
-    if(task->status==RUNNING) task->status=WAIT_SCHEDULE;
-    else if(task->status==WAIT_LOAD) task->status=RUNNING;
-    return NULL;
+
+static int holding(spinlock_t *lk) {
+    int r;
+    pushcli();
+    r = lk->locked && lk->cpu == cpu_current();
+    popcli();
+    return r;
 }
-static Context *kmt_schedule(Event ev, Context *ctx){
-    task_t *task=current_task[cpu_current()];
-    if(task->status==RUNNING) return task->context;
-    else if(/*task->status==WAIT_AWAKE_SCHEDULE||*/task->status==WAIT_SCHEDULE) return scheduler[cpu_current()];
-    else return NULL;
+
+static void kspin_init(spinlock_t *lk, const char *name) {
+    pthread_mutex_lock(&kspin);
+    memset(lk->name, '\0', sizeof(lk->name));
+    strcpy(lk->name, name);
+    lk->locked = 0;
+    lk->cpu = -1;
+    pthread_mutex_unlock(&kspin);
 }
-void solver(){
-    while(1){
-        yield();
-        task_t *task=current_task[cpu_current()];
-        kmt_spin_lock(&lock);
-        if(task->status==WAIT_SCHEDULE) task->status=RUNNABLE;
-        //else if(task->status==WAIT_AWAKE_SCHEDULE) task->status=WAIT_AWAKE;
-        kmt_spin_unlock(&lock);
-        kmt_spin_lock(&lock);
-        task=task->prev;
-        int i=1;
-        stepcnt=getrand()%task_count;
-        for(;i<=stepcnt;){
-            if(task->status==RUNNABLE) i++;
-            task=task->prev;
+
+static void kspin_lock(spinlock_t *lk) {
+    pushcli();
+    if(holding(lk)) {
+        char *info = pmm->alloc(sizeof(MAX_CHAR_LEN));
+        strcpy(info, lk->name);
+        strcat(info, " acquire");
+        panic(info);
+    }
+    pthread_mutex_lock(&lk->locked);
+    lk->cpu = cpu_current();
+}
+
+static void kspin_unlock(spinlock_t *lk) {
+    if(!holding(lk)) {
+        char *info = pmm->alloc(sizeof(MAX_CHAR_LEN));
+        strcpy(info, lk->name);
+        strcat(info, " release");
+        panic(info);
+    }
+    lk->cpu = -1;
+    pthread_mutex_unlock(&lk->locked);
+    popcli();
+}
+
+static void ksem_init(sem_t *sem, const char *name, int value) {
+    pthread_mutex_lock(&ksem);
+    memset(sem->name, '\0', sizeof(sem->name));
+    strcpy(sem->name, name);
+    sem->count = value;
+    sem->waiting_tasks_len = 0;
+    sem->lk = pmm->alloc(sizeof(spinlock_t));
+    kspin_init(sem->lk, name);
+    sem->waiting_tasks = pmm->alloc(MAX_TASK_NUM * sizeof(task_t * ));
+    memset(sem->waiting_tasks, '\0', sizeof(MAX_TASK_NUM * sizeof(task_t * )));
+    pthread_mutex_unlock(&ksem);
+}
+
+static void ksem_wait(sem_t *sem) {
+    kspin_lock(sem->lk);
+    sem->count--;
+    if (sem->count < 0) {
+        int cpu_id = cpu_current();
+        if (current[cpu_id]) {
+            sem->waiting_tasks[sem->waiting_tasks_len++] = current[cpu_id];
+            current[cpu_id]->block = 1;
         }
-        while(task->status!=RUNNABLE/*&&task->last_cpu==cpu_current()*/) task=task->prev;
-        task->status=WAIT_LOAD;
-        task->remain=TIMER;
-        task->last_cpu=cpu_current();
-        kmt_spin_unlock(&lock);
-        current_task[cpu_current()]=task;
+    }
+    kspin_unlock(sem->lk);
+    if (sem->count < 0) {
+        yield();
     }
 }
-void solve(){while(1);}
-static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
-    //assert(task!=NULL);
-    strcpy(task->name,name);
-    task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
-    task->status=RUNNABLE;
-    task->remain=TIMER;
-    task->last_cpu=-1;
-    task->id=++taskcnt;
-    kmt->spin_lock(&lock);
-    insert(current_task[cpu_current()],task);
-    kmt->spin_unlock(&lock);
+
+static void ksem_signal(sem_t *sem) {
+    kspin_lock(sem->lk);
+    sem->count++;
+    if (sem->count <= 0 && sem->waiting_tasks_len > 0) {
+        int r = rand() % sem->waiting_tasks_len;
+        sem->waiting_tasks[r]->block = 0;
+        for (int i = r; i < sem->waiting_tasks_len - 1; i++)
+            sem->waiting_tasks[i] = sem->waiting_tasks[i + 1];
+        sem->waiting_tasks_len--;
+    }
+    kspin_unlock(sem->lk);
+}
+
+static void idle(void *arg) {
+    while (1);
+}
+
+static int kcreate(task_t *task, const char *name, void (*entry)(void *), void *arg) {
+    pthread_mutex_lock(&ktask);
+    task->fence1 = 123456;
+    task->fence2 = 654321;
+    memset(task->name, '\0', sizeof(task->name));
+    strcpy(task->name, name);
+    memset(task->stack, '\0', sizeof(task->stack));
+    task->context = kcontext((Area) {(void *) task->stack, (void *) (task->stack + STACK_SIZE)}, entry, arg);
+    task->state = 0;
+    task->read_write = 0;
+    task->count = 0;
+    task->id = tasks_len;
+    tasks[tasks_len++] = task;
+    pthread_mutex_unlock(&ktask);
     return 0;
 }
-static void kmt_teardown(task_t *task){
-    kmt->spin_lock(&lock);
-    delete(task);
+
+static void kteardown(task_t *task) {
+    pthread_mutex_lock(&ktask);
     pmm->free(task);
-    kmt->spin_unlock(&lock);
+    tasks_len--;
+    pthread_mutex_unlock(&ktask);
 }
-static void kmt_init(){
-    kmt_spin_init(&lock,"lock");
-    for(int i=0;i<cpu_count();i++){
-        current_task[i]=pmm->alloc(sizeof(task_t*));
-        scheduler[i]=pmm->alloc(sizeof(Context*));
-        task_t *task=pmm->alloc(sizeof(task_t));
-        strcpy(task->name,"handler");
-        task->status=WAIT_LOAD;
-        task->remain=TIMER;
-        task->last_cpu=-1;
-        task->context=kcontext((Area){.start=task->stack,.end=task+1,},solve,NULL);
-        task->prev=task->next=task;
-        current_task[i]=task;
+
+static Context *kmt_context_save(Event ev, Context *c) {
+    int cpu_id = cpu_current();
+    if (!current[cpu_id]) {
+        current[cpu_id] = idles[cpu_id];
     }
-    for(int i=1;i<cpu_count();i++){
-        insert(current_task[0],current_task[i]);
-    }
-    os->on_irq(INT_MIN,EVENT_NULL,kmt_context_save);
-    os->on_irq(0,EVENT_IRQ_TIMER,irq_timer);
-    os->on_irq(0,EVENT_YIELD,sched_yield);
-    os->on_irq(INT_MAX,EVENT_NULL,kmt_schedule);
+    current[cpu_id]->context = c;
+/**
+ * Unlock this state after the interruption is down, otherwise, the stack would be corrupted.
+ * One way is unlock the state in the second interruption.
+ */
+    if(last[cpu_id] && last[cpu_id] != current[cpu_id])
+        pthread_mutex_unlock(&last[cpu_id]->state);
+    last[cpu_id] = current[cpu_id];
+    panic_on(current[cpu_id]->fence1 != 123456 || current[cpu_id]->fence2 != 654321, "stackoverflow");
+    return NULL;
 }
-//semaphore
-static void kmt_sem_init(sem_t *sem, const char *name, int value){
-    sem->lk=pmm->alloc(sizeof(spinlock_t));
-    kmt_spin_init(sem->lk,name);
-    sem->count=value;
-}
-static void kmt_sem_wait(sem_t *sem){
-    int acquire=0;
-    while(!acquire){
-        kmt_spin_lock(sem->lk);
-        if(sem->count>0){
-            sem->count--;
-            acquire=1;
-        }
-        kmt_spin_unlock(sem->lk);
-        if(!acquire){
-            if(ienabled()) yield();
+
+static Context *kmt_schedule(Event ev, Context *c) {
+    int cpu_id = cpu_current();
+    task_t *task_interrupt = idles[cpu_id];
+    unsigned int i = -1;
+    for (int _ = 0; _ < tasks_len * 10; _++) {
+        i = rand() % tasks_len;
+        if (!tasks[i]->block && (tasks[i] == current[cpu_id] || !pthread_mutex_trylock(&tasks[i]->state))) {
+            task_interrupt = tasks[i];
+            break;
         }
     }
+    current[cpu_id] = task_interrupt;
+    panic_on(task_interrupt->fence1 != 123456 || task_interrupt->fence2 != 654321, "stackoverflow");
+    return current[cpu_id]->context;
 }
-static void kmt_sem_signal(sem_t *sem){
-    kmt_spin_lock(sem->lk);
-    sem->count++;
-    kmt_spin_unlock(sem->lk);
+
+
+static void kmt_init() {
+    os->on_irq(INT_MIN, EVENT_NULL, kmt_context_save);
+    os->on_irq(INT_MAX, EVENT_NULL, kmt_schedule);
+
+    tasks_len = 0;
+    ktask = 0;
+    kspin = 0;
+    kspin_lock_lock = 0;
+    kspin_unlock_lock = 0;
+    ksem = 0;
+    for (int i = 0; i < cpu_count(); i++) {
+        idles[i] = pmm->alloc(4096);
+        idles[i]->id = -1;
+        memset(idles[i]->name, '\0', sizeof(idles[i]->name));
+        strcpy(idles[i]->name, "IDLE");
+        memset(idles[i]->stack, '\0', sizeof(idles[i]->stack));
+        idles[i]->context = kcontext((Area) {(void *) idles[i]->stack, (void *) (idles[i]->stack + STACK_SIZE)}, idle, NULL);
+        idles[i]->state = 0;
+        idles[i]->fence1 = 123456;
+        idles[i]->fence2 = 654321;
+        current[i] = NULL;
+        last[i] = NULL;
+        cpus[i].ncli = 0;
+        cpus[i].intena = 1;
+    }
 }
+
 MODULE_DEF(kmt) = {
-    .init=kmt_init,
-    .create=kmt_create,
-    .teardown=kmt_teardown,
-    .spin_init=kmt_spin_init,
-    .spin_lock=kmt_spin_lock,
-    .spin_unlock=kmt_spin_unlock,
-    .sem_init=kmt_sem_init,
-    .sem_signal=kmt_sem_signal,
-    .sem_wait=kmt_sem_wait,
+        .init  = kmt_init,
+        .create = kcreate,
+        .teardown  = kteardown,
+        .spin_init = kspin_init,
+        .spin_lock = kspin_lock,
+        .spin_unlock = kspin_unlock,
+        .sem_init = ksem_init,
+        .sem_wait = ksem_wait,
+        .sem_signal = ksem_signal
 };

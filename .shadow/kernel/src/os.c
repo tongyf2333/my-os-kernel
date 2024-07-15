@@ -12,12 +12,10 @@ typedef struct hand{
 }hand;
 hand table[1024],temp[1024];
 int cnt=0;
-extern void solver();
-extern struct task *current_task[];
 //test semaphore
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
-void Tproduce(void *arg) { while (1) { P(&empty);printf("[%d]",current_task[cpu_current()]->id);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);printf("[%d]",current_task[cpu_current()]->id);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
@@ -72,7 +70,8 @@ static void os_init() {
     //hard_test();
 }
 static void os_run() {
-    solver();
+    iset(true);
+    while(1);
 }
 MODULE_DEF(os) = {
     .init=os_init,
