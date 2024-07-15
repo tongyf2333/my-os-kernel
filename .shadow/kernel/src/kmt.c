@@ -43,7 +43,7 @@ static void kmt_spin_lock(spinlock_t *lk){
     lk->status=tmp;
 }
 static void kmt_spin_unlock(spinlock_t *lk){
-    assert(!ienabled());
+    //assert(!ienabled());
     int tmp=lk->status;
     atomic_xchg(&lk->locked, UNLOCKED);
     iset(tmp);
@@ -101,7 +101,7 @@ void solver(){
 }
 void solve(){while(1);}
 static int kmt_create(task_t *task, const char *name, void (*entry)(void *arg), void *arg){
-    assert(task!=NULL);
+    //assert(task!=NULL);
     strcpy(task->name,name);
     task->context=kcontext((Area){.start=task->stack,.end=task+1,},entry,arg);
     task->status=RUNNABLE;

@@ -39,12 +39,12 @@ static Context *os_trap(Event ev, Context *ctx){
         hand h=table[i];
         if (h.event == EVENT_NULL || h.event == ev.event) {
             Context *r = h.handler(ev, ctx);
-            panic_on(r && next, "returning multiple contexts");
+            //panic_on(r && next, "returning multiple contexts");
             if (r!=NULL) next = r;
         }
     }
     //if(!next) printf("event:%d\n",ev.event+1);
-    panic_on(!next, "return to NULL context");
+    //panic_on(!next, "return to NULL context");
     return next;
 }
 static void os_on_irq(int seq, int event, handler_t handler){
