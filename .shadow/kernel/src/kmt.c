@@ -69,7 +69,7 @@ static int holding(spinlock_t *lk) {
 
 static void kspin_init(spinlock_t *lk, const char *name) {
     pthread_mutex_lock(&kspin);
-    memset(lk->name, '\0', sizeof(lk->name));
+    memset(lk->name,0, sizeof(lk->name));
     strcpy(lk->name, name);
     lk->locked = 0;
     lk->cpu = -1;
@@ -102,14 +102,14 @@ static void kspin_unlock(spinlock_t *lk) {
 
 static void ksem_init(sem_t *sem, const char *name, int value) {
     pthread_mutex_lock(&ksem);
-    memset(sem->name, '\0', sizeof(sem->name));
+    memset(sem->name,0, sizeof(sem->name));
     strcpy(sem->name, name);
     sem->count = value;
     sem->waiting_tasks_len = 0;
     sem->lk = pmm->alloc(sizeof(spinlock_t));
     kspin_init(sem->lk, name);
     sem->waiting_tasks = pmm->alloc(MAX_TASK_NUM * sizeof(task_t * ));
-    memset(sem->waiting_tasks, '\0', sizeof(MAX_TASK_NUM * sizeof(task_t * )));
+    memset(sem->waiting_tasks, 0, sizeof(MAX_TASK_NUM * sizeof(task_t * )));
     pthread_mutex_unlock(&ksem);
 }
 
@@ -150,9 +150,9 @@ static int kcreate(task_t *task, const char *name, void (*entry)(void *), void *
     pthread_mutex_lock(&ktask);
     task->fence1 = FENCE1;
     task->fence2 = FENCE2;
-    memset(task->name, '\0', sizeof(task->name));
+    memset(task->name,0,sizeof(task->name));
     strcpy(task->name, name);
-    memset(task->stack, '\0', sizeof(task->stack));
+    memset(task->stack,0,sizeof(task->stack));
     task->context = kcontext((Area) {(void *) task->stack, (void *) (task->stack + STACK_SIZE)}, entry, arg);
     task->state = 0;
     task->read_write = 0;
@@ -182,7 +182,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
  */
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
         pthread_mutex_unlock(&last[cpu_id]->state);
-    last[cpu_id] = current[cpu_id];
+    last[cpu_id] = current[cpu_id];//last[cpuid] means the last thread this cpu runs
     panic_on(current[cpu_id]->fence1 != FENCE1 || current[cpu_id]->fence2 != FENCE2, "stackoverflow");
     return NULL;
 }
@@ -194,6 +194,9 @@ static Context *kmt_schedule(Event ev, Context *c) {
     for (int _ = 0; _ < tasks_len * 10; _++) {
         i = rand() % tasks_len;
         if (!tasks[i]->block && (tasks[i] == current[cpu_id] || !pthread_mutex_trylock(&tasks[i]->state))) {
+            //tasks[i]->block means blocked because waiting sem or spinlock
+            //trylock means trying to get the lock
+
             task_interrupt = tasks[i];
             break;
         }
@@ -217,9 +220,9 @@ static void kmt_init() {
     for (int i = 0; i < cpu_count(); i++) {
         idles[i] = pmm->alloc(sizeof(task_t));
         idles[i]->id = -1;
-        memset(idles[i]->name, '\0', sizeof(idles[i]->name));
-        strcpy(idles[i]->name, "IDLE");
-        memset(idles[i]->stack, '\0', sizeof(idles[i]->stack));
+        memset(idles[i]->name,0,sizeof(idles[i]->name));
+        strcpy(idles[i]->name,"idle");
+        memset(idles[i]->stack,0,sizeof(idles[i]->stack));
         idles[i]->context = kcontext((Area) {(void *) idles[i]->stack, (void *) (idles[i]->stack + STACK_SIZE)}, idle, NULL);
         idles[i]->state = 0;
         idles[i]->fence1 = FENCE1;
@@ -232,13 +235,13 @@ static void kmt_init() {
 }
 
 MODULE_DEF(kmt) = {
-        .init  = kmt_init,
-        .create = kcreate,
-        .teardown  = kteardown,
-        .spin_init = kspin_init,
-        .spin_lock = kspin_lock,
-        .spin_unlock = kspin_unlock,
-        .sem_init = ksem_init,
-        .sem_wait = ksem_wait,
-        .sem_signal = ksem_signal
+    .init  = kmt_init,
+    .create = kcreate,
+    .teardown  = kteardown,
+    .spin_init = kspin_init,
+    .spin_lock = kspin_lock,
+    .spin_unlock = kspin_unlock,
+    .sem_init = ksem_init,
+    .sem_wait = ksem_wait,
+    .sem_signal = ksem_signal
 };
