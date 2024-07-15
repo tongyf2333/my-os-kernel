@@ -3,9 +3,9 @@
 sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
-#define N 2
-#define NPROD 5
-#define NCONS 5
+#define N 5
+#define NPROD 1
+#define NCONS 1
 typedef struct hand{
     int seq,event;
     handler_t handler;
@@ -14,8 +14,8 @@ hand table[1024],temp[1024];
 int cnt=0;
 //test semaphore
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
-void Tproduce(void *arg) { while (1) { P(&empty);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);printf("[producer on cpu %d]",cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);printf("[consumer on cpu %d]",cpu_current()+1);putch(')'); V(&empty); } }
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
 	if(l==r) return;
@@ -51,7 +51,7 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-/*
+
 static void hard_test(){
     kmt->sem_init(&empty, "empty", N);
     kmt->sem_init(&fill,  "fill",  0);
@@ -62,12 +62,12 @@ static void hard_test(){
         kmt->create(task_alloc(), "consumer", Tconsume, NULL);
     }
 }
-*/
+
 static void os_init() {
     pmm->init();
     kmt->init();
     //dev->init();
-    //hard_test();
+    hard_test();
 }
 static void os_run() {
     iset(true);
