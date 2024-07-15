@@ -1,3 +1,6 @@
+#define HARD_TEST
+//#define DEV_TEST
+
 #include <common.h>
 #include <devices.h>
 sem_t empty, fill;
@@ -53,23 +56,22 @@ static void os_on_irq(int seq, int event, handler_t handler){
     table[cnt].seq=seq;
     merge(1,cnt);
 }
-
-static void hard_test(){
-    kmt->sem_init(&empty, "empty", N);
-    kmt->sem_init(&fill,  "fill",  0);
-    for (int i = 0; i < NPROD; i++) {
-        kmt->create(task_alloc(), "producer", Tproduce, NULL);
-    }
-    for (int i = 0; i < NCONS; i++) {
-        kmt->create(task_alloc(), "consumer", Tconsume, NULL);
-    }
-}
-
 static void os_init() {
     pmm->init();
     kmt->init();
-    //dev->init();
-    hard_test();
+    #ifdef DEV_TEST
+        dev->init();
+    #endif
+    #ifdef HARD_TEST
+        kmt->sem_init(&empty, "empty", N);
+        kmt->sem_init(&fill,  "fill",  0);
+        for (int i = 0; i < NPROD; i++) {
+            kmt->create(task_alloc(), "producer", Tproduce, NULL);
+        }
+        for (int i = 0; i < NCONS; i++) {
+            kmt->create(task_alloc(), "consumer", Tconsume, NULL);
+        }
+    #endif
 }
 static void os_run() {
     iset(true);
