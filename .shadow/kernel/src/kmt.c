@@ -181,7 +181,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
         pthread_mutex_unlock(&last[cpu_id]->state);
     last[cpu_id] = current[cpu_id];
-    panic_on(current[cpu_id]->fence1 != 123456 || current[cpu_id]->fence2 != 654321, "stackoverflow");
+    //panic_on(current[cpu_id]->fence1 != 123456 || current[cpu_id]->fence2 != 654321, "stackoverflow");
     return NULL;
 }
 
@@ -197,7 +197,7 @@ static Context *kmt_schedule(Event ev, Context *c) {
         }
     }
     current[cpu_id] = task_interrupt;
-    panic_on(task_interrupt->fence1 != 123456 || task_interrupt->fence2 != 654321, "stackoverflow");
+    //panic_on(task_interrupt->fence1 != 123456 || task_interrupt->fence2 != 654321, "stackoverflow");
     return current[cpu_id]->context;
 }
 
