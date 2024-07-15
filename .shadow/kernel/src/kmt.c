@@ -1,13 +1,5 @@
 #include <common.h>
 
-#define MAX_CPU_NUM 8
-#define INT_MIN 0
-#define INT_MAX 255
-#define MAX_TASK_NUM 32
-#define MAX_CHAR_LEN 128
-#define FENCE1 114514233
-#define FENCE2 1919810
-
 struct cpu cpus[MAX_CPU_NUM];
 static task_t *last[MAX_CPU_NUM];
 static task_t *current[MAX_CPU_NUM];
@@ -181,7 +173,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
  * One way is unlock the state in the second interruption.
  */
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
-        pthread_mutex_unlock(&last[cpu_id]->state);
+        pthread_mutex_unlock(&last[cpu_id]->state);//unlock the last thread(avoid stack data race)
     last[cpu_id] = current[cpu_id];//last[cpuid] means the last thread this cpu runs
     panic_on(current[cpu_id]->fence1 != FENCE1 || current[cpu_id]->fence2 != FENCE2, "stackoverflow");
     return NULL;

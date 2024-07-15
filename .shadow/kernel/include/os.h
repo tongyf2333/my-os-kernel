@@ -1,14 +1,13 @@
 #include<kernel.h>
-#define RUNNABLE 0
-#define RUNNING 1
-#define WAIT_SCHEDULE 2
-#define WAIT_LOAD 3
-#define WAIT_AWAKE 4
-#define WAIT_AWAKE_SCHEDULE 5
-#define DEAD 6
 #define TIMER 1
-#define QUESIZ 1024
 #define STACK_SIZE 64*1024
+#define MAX_CPU_NUM 8
+#define INT_MIN 0
+#define INT_MAX 255
+#define MAX_TASK_NUM 32
+#define MAX_CHAR_LEN 128
+#define FENCE1 114514233
+#define FENCE2 1919810
 typedef volatile uintptr_t pthread_mutex;
 
 struct cpu {
@@ -34,13 +33,9 @@ struct semaphore{
 };
 
 struct task{
-    int status;
-    int remain;
     int id;
-    int last_cpu;
     char name[128];
     Context *context;
-    task_t *next,*prev;
     uint32_t fence1;
     uint8_t stack[STACK_SIZE];
     uint32_t fence2;
