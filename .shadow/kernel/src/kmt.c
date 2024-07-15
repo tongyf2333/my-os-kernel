@@ -14,7 +14,7 @@ int taskcnt=0;
 int stepcnt=0;
 long rnd=1;
 long getrand(){
-    rnd=48271*rnd%((1ll<<31)-1);
+    rnd=48271ll*rnd%((1ll<<31)-1);
     return rnd;
 }
 //linklist
