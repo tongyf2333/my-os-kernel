@@ -99,7 +99,9 @@ static void sem_init(sem_t *sem, const char *name, int value) {
 static void sem_wait(sem_t *sem) {
     spin_lock(sem->lk);
     sem->count--;
+    int acquired=0;
     if (sem->count < 0) {
+        acquired=1;
         int cpu_id = cpu_current();
         if (current[cpu_id]) {//push into the waiting list
             sem->waiting_tasks[sem->waiting_tasks_len++] = current[cpu_id];
@@ -107,9 +109,8 @@ static void sem_wait(sem_t *sem) {
         }
     }
     spin_unlock(sem->lk);
-    if (sem->count < 0) {
-        yield();
-    }
+    //if (sem->count < 0) {yield();}
+    if(acquired) yield();
 }
 
 static void sem_signal(sem_t *sem) {
@@ -157,7 +158,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
         current[cpu_id] = idles[cpu_id];
     }
     current[cpu_id]->context = c;
-    //must unlock a thread when out of interrupt
+    //must unlock a thread when out of interruption
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
         pthread_mutex_unlock(&last[cpu_id]->state);//unlock the last thread(avoid stack data race)
     last[cpu_id] = current[cpu_id];//last[cpuid] means the last thread this cpu runs
