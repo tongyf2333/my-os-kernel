@@ -1,4 +1,4 @@
-//#define HARD_TEST
+#define HARD_TEST
 //#define DEV_TEST
 
 #include <common.h>
