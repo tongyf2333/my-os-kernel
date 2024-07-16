@@ -1,4 +1,4 @@
-//#define HARD_TEST
+#define HARD_TEST
 //#define DEV_TEST
 
 #include <common.h>
@@ -7,18 +7,19 @@ sem_t empty, fill;
 #define P kmt->sem_wait
 #define V kmt->sem_signal
 #define N 5
-#define NPROD 1
-#define NCONS 1
+#define NPROD 4
+#define NCONS 4
 typedef struct hand{
     int seq,event;
     handler_t handler;
 }hand;
 hand table[1024],temp[1024];
 int cnt=0;
+extern task_t *current[];
 //test semaphore
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
-void Tproduce(void *arg) { while (1) { P(&empty);printf("[producer on cpu %d]",cpu_current()+1);putch('('); V(&fill);  } }
-void Tconsume(void *arg) { while (1) { P(&fill);printf("[consumer on cpu %d]",cpu_current()+1);putch(')'); V(&empty); } }
+void Tproduce(void *arg) { while (1) { P(&empty);printf("[%d on cpu %d]",current[cpu_current()]->cnt,cpu_current()+1);putch('('); V(&fill);  } }
+void Tconsume(void *arg) { while (1) { P(&fill);printf("[%d on cpu %d]",current[cpu_current()]->cnt,cpu_current()+1);putch(')'); V(&empty); } }
 //sorting handlers
 int cmp1(hand a,hand b){return a.seq<b.seq;}
 void merge(int l,int r){
