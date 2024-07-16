@@ -99,9 +99,9 @@ static void sem_init(sem_t *sem, const char *name, int value) {
 static void sem_wait(sem_t *sem) {
     spin_lock(sem->lk);
     sem->count--;
-    int acquired=0;
+    //int acquired=0;
     if (sem->count < 0) {
-        acquired=1;
+        //acquired=1;
         int cpu_id = cpu_current();
         if (current[cpu_id]) {//push into the waiting list
             sem->waiting_tasks[sem->waiting_tasks_len++] = current[cpu_id];
@@ -109,8 +109,8 @@ static void sem_wait(sem_t *sem) {
         }
     }
     spin_unlock(sem->lk);
-    //if (sem->count < 0) {yield();}
-    if(acquired) yield();
+    if (sem->count < 0) {yield();}
+    //if(acquired) yield();
 }
 
 static void sem_signal(sem_t *sem) {
