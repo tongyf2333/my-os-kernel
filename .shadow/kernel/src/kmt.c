@@ -170,7 +170,7 @@ static Context *kmt_schedule(Event ev, Context *c) {
     task_t *task_interrupt = idles[cpu_id];
     unsigned int i = -1;
     for (int _ = 0; _ < tasks_len * 10; _++) {
-        i = rand() % tasks_len;
+        i = rand()*rand() % tasks_len;
         if (!tasks[i]->block && (tasks[i] == current[cpu_id] || !pthread_mutex_trylock(&tasks[i]->state))) {
             //tasks[i]->block means blocked because waiting sem or spinlock.
             //trylock means trying to get the lock.
