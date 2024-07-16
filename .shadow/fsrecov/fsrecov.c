@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sys/mman.h>
 #include "fat32.h"
 
@@ -12,6 +13,16 @@ wchar_t long_name[4096];
 LFNEntry *names[256];
 int clussiz;
 char buffer[16*1024*1024],buf[128];
+
+int abs(int x){
+    if(x<0) return -x;
+    return x;
+}
+
+int min(int x,int y){
+    if(x<y) return x;
+    return y;
+}
 
 uint8_t calc_checksum(uint8_t *sfn){
     uint8_t sum = 0;
@@ -59,20 +70,60 @@ release:
     exit(1);
 }
 
-int veclen(char *a,char *b){
-    int sum=0;
-    for(int i=0;i<clussiz;i++){
-        sum+=((*a)-(*b))*((*a)-(*b));
+long l1_loss(char *a,char *b,int len){
+    long ans=0;
+    for(int i=0;i<len;i++){
+        ans+=abs((*a)-(*b));
+        a++,b++;
     }
-    return sum;
+    return ans;
 }
 
-int getsha(char *begin,int size){
+char pool[16*1024*1024+10];
+int vis[10000005];
+
+int getsha(char *begin,int clusid,int size){
     assert(begin[0]==0x42&&begin[1]==0x4d);
+    uint32_t first_data_sector = hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32);
+    uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
+    char *cur=begin,*dst=pool;
+    int width=*(int*)(begin+18);
+    int len=3*width,loaded=0;
+    if(len%4!=0) len=len+(4-(len%4));
+    memset(pool,0,sizeof(pool));
+    memset(vis,0,sizeof(vis));
+    vis[clusid]=1;
+    //printf("QAQ\n");
+    for(int i=0,j=0;i<size;i+=clussiz,j++){
+        //printf("QQQ\n");
+        char *end=cur+clussiz;
+        if(!i) loaded+=(clussiz-54);
+        else loaded+=clussiz;
+        char *lastline=end-(loaded%len)-len;
+        memcpy(pool+i,cur,clussiz);
+        int part1=loaded%len,part2=len-loaded%len;
+        char *headd=(char*)cluster_to_sec(clusid+j+1);
+        long vall=l1_loss(lastline,lastline+len,len);
+        long minn=vall;int minclus=clusid+j+1;
+        //printf("QAZ\n");
+        if(vall>(1ll<<18)){
+            for(int kk=2;kk<total_clusters;kk++){
+                if(vis[kk]) continue;
+                char *head=(char*)cluster_to_sec(kk);
+                long sum=l1_loss(lastline,lastline+len,part1)+l1_loss(lastline+part1,head,part2);
+                if(sum<minn) minn=sum,minclus=kk;
+            }
+        }
+        //printf("QWE\n");
+        vis[minclus]=1;
+        cur=(char*)cluster_to_sec(minclus);
+        if(minclus>=total_clusters) break;
+    }
+    //printf("qwq\n");
     char *file_path = "/tmp/a.bin";
     int written=0;
     FILE *file = fopen(file_path, "wb");
-    fwrite(begin,sizeof(char),size,file);
+    fwrite(pool,sizeof(char),size,file);
     fclose(file);
     FILE *fp=popen("sha1sum /tmp/a.bin","r");
     fscanf(fp,"%40s",buf);
@@ -123,7 +174,7 @@ void solve(){
                     long_name[cnt++]='\0';
                     u32 dataClus = dent->DIR_FstClusLO | (dent->DIR_FstClusHI << 16);
                     char *pointer=cluster_to_sec(dataClus);
-                    getsha(pointer,dent->DIR_FileSize);
+                    getsha(pointer,dataClus,dent->DIR_FileSize);
                     printf(" %ls\n",long_name);
                 }
             }
