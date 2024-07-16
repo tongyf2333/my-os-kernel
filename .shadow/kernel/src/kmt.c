@@ -2,7 +2,7 @@
 
 struct cpu cpus[MAX_CPU_NUM];
 static task_t *last[MAX_CPU_NUM];
-static task_t *current[MAX_CPU_NUM];
+task_t *current[MAX_CPU_NUM];
 static task_t *idles[MAX_CPU_NUM];
 static task_t *tasks[MAX_TASK_NUM];
 static unsigned int tasks_len;
@@ -12,6 +12,8 @@ static pthread_mutex kspin;
 static pthread_mutex kspin_lock_lock;
 static pthread_mutex kspin_unlock_lock;
 static pthread_mutex ksem;
+
+int taskcnt=0;
 
 //mini spinlock
 inline intptr_t katomic_xchg(volatile pthread_mutex *addr, intptr_t newval) {
@@ -139,6 +141,7 @@ static int create(task_t *task, const char *name, void (*entry)(void *), void *a
     task->read_write = 0;
     task->count = 0;
     task->id = tasks_len;
+    task->cnt=++taskcnt;
     tasks[tasks_len++] = task;
     pthread_mutex_unlock(&ktask);
     return 0;
@@ -170,7 +173,7 @@ static Context *kmt_schedule(Event ev, Context *c) {
     task_t *task_interrupt = idles[cpu_id];
     unsigned int i = -1;
     for (int _ = 0; _ < tasks_len * 10; _++) {
-        i = rand()*rand() % tasks_len;
+        i = rand() % tasks_len;
         if (!tasks[i]->block && (tasks[i] == current[cpu_id] || !pthread_mutex_trylock(&tasks[i]->state))) {
             //tasks[i]->block means blocked because waiting sem or spinlock.
             //trylock means trying to get the lock.

@@ -34,6 +34,7 @@ struct semaphore{
 
 struct task{
     int id;
+    int cnt;
     char name[128];
     Context *context;
     uint32_t fence1;
