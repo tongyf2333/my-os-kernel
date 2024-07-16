@@ -157,7 +157,7 @@ static Context *kmt_context_save(Event ev, Context *c) {
         current[cpu_id] = idles[cpu_id];
     }
     current[cpu_id]->context = c;
-    //must unlock a thread when out of interrupt
+    //must unlock a thread when out of interruption
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
         pthread_mutex_unlock(&last[cpu_id]->state);//unlock the last thread(avoid stack data race)
     last[cpu_id] = current[cpu_id];//last[cpuid] means the last thread this cpu runs
