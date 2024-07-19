@@ -9,8 +9,6 @@ static unsigned int tasks_len;
 
 static pthread_mutex ktask;
 static pthread_mutex kspin;
-static pthread_mutex kspin_lock_lock;
-static pthread_mutex kspin_unlock_lock;
 static pthread_mutex ksem;
 
 int taskcnt=0;
@@ -195,8 +193,6 @@ static void kmt_init() {
     tasks_len = 0;
     ktask = 0;
     kspin = 0;
-    kspin_lock_lock = 0;
-    kspin_unlock_lock = 0;
     ksem = 0;
     for (int i = 0; i < cpu_count(); i++) {
         idles[i] = pmm->alloc(sizeof(task_t));
