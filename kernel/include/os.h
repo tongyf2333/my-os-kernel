@@ -42,7 +42,6 @@ struct task{
     uint32_t fence2;
     pthread_mutex block;
     int count;
-    pthread_mutex read_write;
     pthread_mutex state;
 };
 
