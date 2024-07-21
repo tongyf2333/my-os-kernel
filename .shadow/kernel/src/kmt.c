@@ -7,22 +7,20 @@ static task_t *idles[MAX_CPU_NUM];
 static task_t *tasks[MAX_TASK_NUM];
 static unsigned int tasks_len;
 
-static pthread_mutex ktask;
-static pthread_mutex kspin;
-static pthread_mutex ksem;
+static mini_lock ktask,kspin,ksem;
 
 int taskcnt=0;
 
 //mini spinlock
-inline intptr_t katomic_xchg(volatile pthread_mutex *addr, intptr_t newval) {
+inline intptr_t katomic_xchg(volatile mini_lock *addr, intptr_t newval) {
     intptr_t result;
     asm volatile ("lock xchg %0, %1":
     "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
     return result;
 }
-inline void pthread_mutex_lock(pthread_mutex *lock) {while (katomic_xchg(lock, 1));}
-inline void pthread_mutex_unlock(pthread_mutex *lock) {asm volatile("movl $0, %0" : "+m" (*lock) : );}
-inline int pthread_mutex_trylock(pthread_mutex *lock) {return katomic_xchg(lock, 1);}
+inline void pthread_mutex_lock(mini_lock *lock) {while (katomic_xchg(lock, 1));}
+inline void pthread_mutex_unlock(mini_lock *lock) {asm volatile("movl $0, %0" : "+m" (*lock) : );}
+inline int pthread_mutex_trylock(mini_lock *lock) {return katomic_xchg(lock, 1);}
 //spinlock
 void pushcli() {
     iset(false);
@@ -61,23 +59,13 @@ static void spin_init(spinlock_t *lk, const char *name) {
 
 static void spin_lock(spinlock_t *lk) {
     pushcli();
-    if(holding(lk)) {
-        char *info = pmm->alloc(sizeof(MAX_CHAR_LEN));
-        strcpy(info, lk->name);
-        strcat(info, " acquire");
-        panic(info);
-    }
+    if(holding(lk)) panic("acquire");
     pthread_mutex_lock(&lk->locked);
     lk->cpu = cpu_current();
 }
 
 static void spin_unlock(spinlock_t *lk) {
-    if(!holding(lk)) {
-        char *info = pmm->alloc(sizeof(MAX_CHAR_LEN));
-        strcpy(info, lk->name);
-        strcat(info, " release");
-        panic(info);
-    }
+    if(!holding(lk)) panic("release");
     lk->cpu = -1;
     pthread_mutex_unlock(&lk->locked);
     popcli();
@@ -107,9 +95,7 @@ static void sem_wait(sem_t *sem) {
         }
     }
     spin_unlock(sem->lk);
-    if (sem->count < 0) {
-        yield();
-    }
+    if (sem->count < 0) yield();
 }
 
 static void sem_signal(sem_t *sem) {
@@ -136,7 +122,6 @@ static int create(task_t *task, const char *name, void (*entry)(void *), void *a
     memset(task->stack,0,sizeof(task->stack));
     task->context = kcontext((Area) {(void *) task->stack, (void *) (task->stack + STACK_SIZE)}, entry, arg);
     task->state = 0;
-    task->read_write = 0;
     task->count = 0;
     task->id = tasks_len;
     task->cnt=++taskcnt;
@@ -154,9 +139,7 @@ static void teardown(task_t *task) {
 
 static Context *kmt_context_save(Event ev, Context *c) {
     int cpu_id = cpu_current();
-    if (!current[cpu_id]) {
-        current[cpu_id] = idles[cpu_id];
-    }
+    if (!current[cpu_id])  current[cpu_id] = idles[cpu_id];
     current[cpu_id]->context = c;
     //must unlock a thread when out of interruption
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
