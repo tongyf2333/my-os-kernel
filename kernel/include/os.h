@@ -8,7 +8,7 @@
 #define MAX_CHAR_LEN 128
 #define FENCE1 114514233
 #define FENCE2 1919810
-typedef volatile uintptr_t pthread_mutex;
+typedef volatile uintptr_t mini_lock;
 
 struct cpu {
     int ncli;
@@ -18,7 +18,7 @@ struct cpu {
 extern struct cpu cpus[];
 
 struct spinlock{
-    pthread_mutex locked;
+    mini_lock locked;
     char name[128];
     int status;
     int cpu;
@@ -40,9 +40,8 @@ struct task{
     uint32_t fence1;
     uint8_t stack[STACK_SIZE];
     uint32_t fence2;
-    pthread_mutex block;
+    mini_lock block;
     int count;
-    pthread_mutex read_write;
-    pthread_mutex state;
+    mini_lock state;
 };
 
