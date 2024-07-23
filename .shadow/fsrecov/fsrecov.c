@@ -86,7 +86,7 @@ int getsha(char *begin,int clusid,int size){
     assert(begin[0]==0x42&&begin[1]==0x4d);
     uint32_t first_data_sector = hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32);
     uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
-    char *cur=begin,*dst=pool;
+    char *cur=begin;int cid=clusid;
     int width=*(int*)(begin+18);
     int len=3*width,loaded=0;
     if(len%4!=0) len=len+(4-(len%4));
@@ -101,13 +101,12 @@ int getsha(char *begin,int clusid,int size){
         char *lastline=end-(loaded%len)-len;
         memcpy(pool+i,cur,clussiz);
         int part1=loaded%len,part2=len-loaded%len;
-        char *headd=(char*)cluster_to_sec(clusid+j+1);
         long vall=l1_loss(lastline,lastline+len,len);
         long minn=vall;
-        int minclus=clusid+j+1;
-        if(vall>20*before&&before!=-1){
+        int minclus=cid+1;
+        if(vall>50*before&&before!=-1){
             for(int kk=2;kk<total_clusters;kk++){
-                if(vis[kk]) continue;
+                if(vis[kk]==1) continue;
                 char *head=(char*)cluster_to_sec(kk);
                 long sum=l1_loss(lastline,lastline+len,part1)+l1_loss(lastline+part1,head,part2);
                 if(sum<minn) minn=sum,minclus=kk;
@@ -115,7 +114,7 @@ int getsha(char *begin,int clusid,int size){
         }
         vis[minclus]=1;
         before=minn;
-        cur=(char*)cluster_to_sec(minclus);
+        cur=(char*)cluster_to_sec(minclus);cid=minclus;
         if(minclus>=total_clusters) break;
     }
     char *file_path = "/tmp/a.bin";
