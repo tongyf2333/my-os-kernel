@@ -99,22 +99,24 @@ int getsha(char *begin,int clusid,int size){
                 if((*pos)!=0){flag=1;break;}
             }
             if(flag){
-                int part1=loaded%len,part2=len-loaded%len;
+                int part1=loaded%len,part2=(len-loaded%len)%len;
                 for(int kk=2;kk<total_clusters;kk++){
                     if(vis[kk]==1) continue;
                     char *head=(char*)cluster_to_sec(kk);
                     int flg=0;
                     for(int tt=1;tt<=padding;tt++){
                         char *pos=head+part2-tt;
-                        if(pos<head) break;
+                        if(pos<head||pos>=head+len) break;
                         if((*pos)!=0){flg=1;break;}
                     }
                     for(int tt=1;tt<=padding;tt++){
                         char *pos=head+part2+len-tt;
+                        if(pos<head||pos>=head+len) break;
                         if((*pos)!=0){flg=1;break;}
                     }
                     for(int tt=1;tt<=padding;tt++){
                         char *pos=head+part2+2*len-tt;
+                        if(pos<head||pos>=head+len) break;
                         if((*pos)!=0){flg=1;break;}
                     }
                     if(!flg){minclus=kk;break;}
