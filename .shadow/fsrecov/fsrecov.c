@@ -70,15 +70,6 @@ release:
     exit(1);
 }
 
-long l1_loss(char *a,char *b,int len){
-    long ans=0;
-    for(int i=0;i<len;i++){
-        ans+=abs((*a)-(*b));
-        a++,b++;
-    }
-    return ans;
-}
-
 char pool[16*1024*1024+10];
 int vis[10000005];
 
@@ -86,34 +77,46 @@ int getsha(char *begin,int clusid,int size){
     assert(begin[0]==0x42&&begin[1]==0x4d);
     uint32_t first_data_sector = hdr->BPB_RsvdSecCnt + (hdr->BPB_NumFATs * hdr->BPB_FATSz32);
     uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
-    char *cur=begin;int cid=clusid;
-    int width=*(int*)(begin+18);
-    int len=3*width,loaded=0;
-    if(len%4!=0) len=len+(4-(len%4));
-    memset(pool,0,sizeof(pool));
-    memset(vis,0,sizeof(vis));
+    char *cur=begin;
+    int cid=clusid,width=*(int*)(begin+18);
+    //printf("width:%d ",width);
+    int len=3*width,loaded=0,padding=(4-len%4)%4;
+    len+=padding;
+    memset(pool,0,sizeof(pool)),memset(vis,0,sizeof(vis));
     vis[clusid]=1;
     long before=-1;
     for(int i=0,j=0;i<size;i+=clussiz,j++){
         char *end=cur+clussiz;
         if(!i) loaded+=(clussiz-54);
         else loaded+=clussiz;
-        char *lastline=end-(loaded%len)-len;
+        char *lastline=end-(loaded%len);
         memcpy(pool+i,cur,clussiz);
-        int part1=loaded%len,part2=len-loaded%len;
-        long vall=l1_loss(lastline,lastline+len,len);
-        long minn=vall;
         int minclus=cid+1;
-        if(vall>100*before&&before!=-1){
-            for(int kk=2;kk<total_clusters;kk++){
-                if(vis[kk]==1) continue;
-                char *head=(char*)cluster_to_sec(kk);
-                long sum=l1_loss(lastline,lastline+len,part1)+l1_loss(lastline+part1,head,part2);
-                if(sum<minn) minn=sum,minclus=kk;
+        if(padding!=0){
+            int flag=0;
+            for(int tt=1;tt<=padding;tt++){
+                char *pos=lastline+len-tt;
+                if((*pos)!=0){flag=1;break;}
+            }
+            if(flag){
+                int part1=loaded%len,part2=len-loaded%len;
+                for(int kk=2;kk<total_clusters;kk++){
+                    if(vis[kk]==1) continue;
+                    char *head=(char*)cluster_to_sec(kk);
+                    int flg=0;
+                    for(int tt=1;tt<=padding;tt++){
+                        char *pos=head+part2+len-tt;
+                        if((*pos)!=0){flg=1;break;}
+                    }
+                    for(int tt=1;tt<=padding;tt++){
+                        char *pos=head+part2+2*len-tt;
+                        if((*pos)!=0){flg=1;break;}
+                    }
+                    if(!flg){minclus=kk;break;}
+                }
             }
         }
         vis[minclus]=1;
-        before=minn;
         cur=(char*)cluster_to_sec(minclus);cid=minclus;
         if(minclus>=total_clusters) break;
     }
