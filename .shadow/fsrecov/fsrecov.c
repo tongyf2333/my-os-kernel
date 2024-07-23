@@ -85,7 +85,7 @@ int getsha(char *begin,int clusid,int size){
     memset(pool,0,sizeof(pool)),memset(vis,0,sizeof(vis));
     vis[clusid]=1;
     long before=-1;
-    for(int i=0,j=0;i<size;i+=clussiz,j++){
+    for(int i=0;i<size;i+=clussiz){
         char *end=cur+clussiz;
         if(!i) loaded+=(clussiz-54);
         else loaded+=clussiz;
@@ -106,6 +106,7 @@ int getsha(char *begin,int clusid,int size){
                     int flg=0;
                     for(int tt=1;tt<=padding;tt++){
                         char *pos=head+part2-tt;
+                        if(pos<head) break;
                         if((*pos)!=0){flg=1;break;}
                     }
                     for(int tt=1;tt<=padding;tt++){
