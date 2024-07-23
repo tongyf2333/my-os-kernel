@@ -93,9 +93,8 @@ int getsha(char *begin,int clusid,int size){
     memset(pool,0,sizeof(pool));
     memset(vis,0,sizeof(vis));
     vis[clusid]=1;
-    //printf("QAQ\n");
+    long before=-1;
     for(int i=0,j=0;i<size;i+=clussiz,j++){
-        //printf("QQQ\n");
         char *end=cur+clussiz;
         if(!i) loaded+=(clussiz-54);
         else loaded+=clussiz;
@@ -104,9 +103,9 @@ int getsha(char *begin,int clusid,int size){
         int part1=loaded%len,part2=len-loaded%len;
         char *headd=(char*)cluster_to_sec(clusid+j+1);
         long vall=l1_loss(lastline,lastline+len,len);
-        long minn=vall;int minclus=clusid+j+1;
-        //printf("QAZ\n");
-        if(vall>(1ll<<18)){
+        long minn=vall;
+        int minclus=clusid+j+1;
+        if(vall>10*before){
             for(int kk=2;kk<total_clusters;kk++){
                 if(vis[kk]) continue;
                 char *head=(char*)cluster_to_sec(kk);
@@ -114,12 +113,11 @@ int getsha(char *begin,int clusid,int size){
                 if(sum<minn) minn=sum,minclus=kk;
             }
         }
-        //printf("QWE\n");
         vis[minclus]=1;
+        before=minn;
         cur=(char*)cluster_to_sec(minclus);
         if(minclus>=total_clusters) break;
     }
-    //printf("qwq\n");
     char *file_path = "/tmp/a.bin";
     int written=0;
     FILE *file = fopen(file_path, "wb");
