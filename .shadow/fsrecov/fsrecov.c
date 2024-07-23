@@ -79,8 +79,8 @@ int getsha(char *begin,int clusid,int size){
     uint32_t total_clusters = (hdr->BPB_TotSec32 - first_data_sector) / hdr->BPB_SecPerClus;
     char *cur=begin;
     int cid=clusid,width=*(int*)(begin+18);
-    //printf("width:%d ",width);
     int len=3*width,loaded=0,padding=(4-len%4)%4;
+    //printf("width:%d padding:%d ",width,padding);
     len+=padding;
     memset(pool,0,sizeof(pool)),memset(vis,0,sizeof(vis));
     vis[clusid]=1;
@@ -94,9 +94,11 @@ int getsha(char *begin,int clusid,int size){
         int minclus=cid+1;
         if(padding!=0){
             int flag=0;
-            for(int tt=1;tt<=padding;tt++){
-                char *pos=lastline+len-tt;
-                if((*pos)!=0){flag=1;break;}
+            for(int t=1;t*len<clussiz;t++){
+                for(int tt=1;tt<=padding;tt++){
+                    char *pos=lastline+t*len-tt;
+                    if((*pos)!=0){flag=1;break;}
+                }
             }
             if(flag){
                 int part1=loaded%len,part2=(len-loaded%len)%len;
@@ -104,20 +106,12 @@ int getsha(char *begin,int clusid,int size){
                     if(vis[kk]==1) continue;
                     char *head=(char*)cluster_to_sec(kk);
                     int flg=0;
-                    for(int tt=1;tt<=padding;tt++){
-                        char *pos=head+part2-tt;
-                        if(pos<head||pos>=head+len) break;
-                        if((*pos)!=0){flg=1;break;}
-                    }
-                    for(int tt=1;tt<=padding;tt++){
-                        char *pos=head+part2+len-tt;
-                        if(pos<head||pos>=head+len) break;
-                        if((*pos)!=0){flg=1;break;}
-                    }
-                    for(int tt=1;tt<=padding;tt++){
-                        char *pos=head+part2+2*len-tt;
-                        if(pos<head||pos>=head+len) break;
-                        if((*pos)!=0){flg=1;break;}
+                    for(int t=1;t*len<clussiz;t++){
+                        for(int tt=1;tt<=padding;tt++){
+                            char *pos=head+part2+t*len-tt;
+                            if(pos<head||pos>=head+clussiz) break;
+                            if((*pos)!=0){flag=1;break;}
+                        }
                     }
                     if(!flg){minclus=kk;break;}
                 }
