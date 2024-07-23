@@ -104,7 +104,7 @@ int getsha(char *begin,int clusid,int size){
         long vall=l1_loss(lastline,lastline+len,len);
         long minn=vall;
         int minclus=cid+1;
-        if(vall>50*before&&before!=-1){
+        if(vall>100*before&&before!=-1){
             for(int kk=2;kk<total_clusters;kk++){
                 if(vis[kk]==1) continue;
                 char *head=(char*)cluster_to_sec(kk);
