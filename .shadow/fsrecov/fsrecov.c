@@ -105,6 +105,10 @@ int getsha(char *begin,int clusid,int size){
                     char *head=(char*)cluster_to_sec(kk);
                     int flg=0;
                     for(int tt=1;tt<=padding;tt++){
+                        char *pos=head+part2-tt;
+                        if((*pos)!=0){flg=1;break;}
+                    }
+                    for(int tt=1;tt<=padding;tt++){
                         char *pos=head+part2+len-tt;
                         if((*pos)!=0){flg=1;break;}
                     }
