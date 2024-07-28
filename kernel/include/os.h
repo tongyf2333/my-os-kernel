@@ -7,10 +7,12 @@
 #define MAX_CHAR_LEN 128
 #define FENCE1 114514233
 #define FENCE2 1919810
+#define UNLOCKED 0
+#define LOCKED 1
 typedef volatile uintptr_t pthread_mutex;
 
 struct cpu {
-    int ncli;
+    int noff;
     int intena;
 };
 
