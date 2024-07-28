@@ -1,9 +1,8 @@
 #include<kernel.h>
-#define TIMER 1
 #define STACK_SIZE 64*1024
 #define MAX_CPU_NUM 8
 #define INT_MIN 0
-#define INT_MAX 255
+#define INT_MAX 214748364
 #define MAX_TASK_NUM 32
 #define MAX_CHAR_LEN 128
 #define FENCE1 114514233
@@ -14,8 +13,6 @@ struct cpu {
     int ncli;
     int intena;
 };
-
-extern struct cpu cpus[];
 
 struct spinlock{
     pthread_mutex locked;
