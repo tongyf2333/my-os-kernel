@@ -23,10 +23,9 @@ bool holding(spinlock_t *lk) {
 
 void push_off(void) {
     int old = ienabled();
-    struct cpu *c = &cpus[cpu_current()];
     iset(false);
-    if (c->noff == 0) c->intena = old;
-    c->noff += 1;
+    if (cpus[cpu_current()].noff == 0) cpus[cpu_current()].intena = old;
+    cpus[cpu_current()].noff += 1;
 }
 
 void pop_off(void) {
