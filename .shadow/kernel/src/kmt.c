@@ -14,12 +14,6 @@ static pthread_mutex ksem;
 int taskcnt=0;
 
 //mini spinlock
-inline intptr_t katomic_xchg(volatile pthread_mutex *addr, intptr_t newval) {
-    intptr_t result;
-    asm volatile ("lock xchg %0, %1":
-    "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
-    return result;
-}
 inline void pthread_mutex_lock(pthread_mutex *lock) {while (atomic_xchg((int*)lock, 1));}
 inline void pthread_mutex_unlock(pthread_mutex *lock) {atomic_xchg((int*)lock,0);}
 inline int pthread_mutex_trylock(pthread_mutex *lock) {return atomic_xchg((int*)lock, 1);}
