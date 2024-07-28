@@ -1,15 +1,11 @@
 #include <common.h>
 
 struct cpu cpus[MAX_CPU_NUM];
-static task_t *last[MAX_CPU_NUM];
+static task_t *last[MAX_CPU_NUM],*idles[MAX_CPU_NUM],*tasks[MAX_TASK_NUM];
 task_t *current[MAX_CPU_NUM];
-static task_t *idles[MAX_CPU_NUM];
-static task_t *tasks[MAX_TASK_NUM];
 static unsigned int tasks_len;
 
-static pthread_mutex ktask;
-static pthread_mutex kspin;
-static pthread_mutex ksem;
+static pthread_mutex ktask,kspin,ksem;
 
 int taskcnt=0;
 
@@ -135,9 +131,7 @@ static void teardown(task_t *task) {
 
 static Context *kmt_context_save(Event ev, Context *c) {
     int cpu_id = cpu_current();
-    if (!current[cpu_id]) {
-        current[cpu_id] = idles[cpu_id];
-    }
+    if (!current[cpu_id]) current[cpu_id] = idles[cpu_id];
     current[cpu_id]->context = c;
     //must unlock a thread when out of interruption
     if(last[cpu_id] && last[cpu_id] != current[cpu_id])
@@ -166,15 +160,10 @@ static Context *kmt_schedule(Event ev, Context *c) {
     return current[cpu_id]->context;
 }
 
-
 static void kmt_init() {
     os->on_irq(INT_MIN, EVENT_NULL, kmt_context_save);
     os->on_irq(INT_MAX, EVENT_NULL, kmt_schedule);
-
-    tasks_len = 0;
-    ktask = 0;
-    kspin = 0;
-    ksem = 0;
+    tasks_len = 0,ktask = 0,kspin = 0,ksem = 0;
     for (int i = 0; i < cpu_count(); i++) {
         idles[i] = pmm->alloc(sizeof(task_t));
         idles[i]->id = -1;
