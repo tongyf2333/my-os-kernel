@@ -21,10 +21,10 @@ extern task_t *current[];
 static inline task_t *task_alloc() {return pmm->alloc(sizeof(task_t));}
 void Tproduce(void *arg) { while (1) { P(&empty);printf("[%d on cpu %d]",current[cpu_current()]->cnt,cpu_current()+1);putch('('); V(&fill);  } }
 void Tconsume(void *arg) { while (1) { P(&fill);printf("[%d on cpu %d]",current[cpu_current()]->cnt,cpu_current()+1);putch(')'); V(&empty); } }
-void customer(void *arg){while(1){printf("[%d on cpu %d]",current[cpu_current()]->cnt,cpu_current()+1);}}
+void customer(void *arg) {while(1){printf("[%d on cpu %d]",current[cpu_current()]->cnt,cpu_current()+1);}}
 //sorting handlers
-int cmp1(hand a,hand b){return a.seq<b.seq;}
-void merge(int l,int r){
+int cmp1(hand a,hand b) {return a.seq<b.seq;}
+void merge(int l,int r) {
 	if(l==r) return;
 	int mid=(l+r)/2;
 	merge(l,mid);
@@ -39,7 +39,7 @@ void merge(int l,int r){
 	for(int i=l;i<=r;i++) table[i]=temp[i];
 }
 //os module
-static Context *os_trap(Event ev, Context *ctx){
+static Context *os_trap(Event ev, Context *ctx) {
     Context *next = NULL;
     for (int i=1;i<=cnt;i++) {
         hand h=table[i];
@@ -53,7 +53,7 @@ static Context *os_trap(Event ev, Context *ctx){
     panic_on(!next, "return to NULL context");
     return next;
 }
-static void os_on_irq(int seq, int event, handler_t handler){
+static void os_on_irq(int seq, int event, handler_t handler) {
     table[++cnt].event=event;
     table[cnt].handler=handler;
     table[cnt].seq=seq;
