@@ -20,9 +20,9 @@ inline intptr_t katomic_xchg(volatile pthread_mutex *addr, intptr_t newval) {
     "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
     return result;
 }
-inline void pthread_mutex_lock(pthread_mutex *lock) {while (katomic_xchg(lock, 1));}
+inline void pthread_mutex_lock(pthread_mutex *lock) {while (atomic_xchg((int*)lock, 1));}
 inline void pthread_mutex_unlock(pthread_mutex *lock) {asm volatile("movl $0, %0" : "+m" (*lock) : );}
-inline int pthread_mutex_trylock(pthread_mutex *lock) {return katomic_xchg(lock, 1);}
+inline int pthread_mutex_trylock(pthread_mutex *lock) {return atomic_xchg((int*)lock, 1);}
 //spinlock
 void pushcli() {
     iset(false);
