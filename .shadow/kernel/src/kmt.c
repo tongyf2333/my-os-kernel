@@ -14,30 +14,44 @@ inline void pthread_mutex_lock(pthread_mutex *lock) {while (atomic_xchg((int*)lo
 inline void pthread_mutex_unlock(pthread_mutex *lock) {atomic_xchg((int*)lock,0);}
 inline int pthread_mutex_trylock(pthread_mutex *lock) {return atomic_xchg((int*)lock, 1);}
 //spinlock
-void pushcli() {
+bool holding(spinlock_t *lk) {
+    return (
+        lk->status == LOCKED &&
+        lk->cpu == cpu_current()
+    );
+}
+
+void push_off(void) {
+    int old = ienabled();
+    struct cpu *c = &cpus[cpu_current()];
     iset(false);
-    int cpu_id = cpu_current();
-    if (cpus[cpu_id].ncli == 0)
-        cpus[cpu_id].intena = ienabled();
-    cpus[cpu_id].ncli += 1;
+    if (c->noff == 0) c->intena = old;
+    c->noff += 1;
 }
 
-void popcli() {
-    panic_on(ienabled(), "popcli - interruptible");
-    int cpu_id = cpu_current();
-    panic_on(--cpus[cpu_id].ncli < 0, "popcli");
-    if (!cpus[cpu_id].ncli && !cpus[cpu_id].intena) {
-        cpus[cpu_id].intena = 1;
-        iset(true);
-    }
+void pop_off(void) {
+    struct cpu *c = &cpus[cpu_current()];
+    if (ienabled()) panic("pop_off - interruptible");
+    if (c->noff < 1) panic("pop_off");
+    c->noff -= 1;
+    if (c->noff == 0 && c->intena) iset(true);
 }
 
-static int holding(spinlock_t *lk) {
-    int r;
-    pushcli();
-    r = lk->locked && lk->cpu == cpu_current();
-    popcli();
-    return r;
+void spin_lock(spinlock_t *lk) {
+    push_off();
+    if (holding(lk)) panic("acquire");
+    int got;
+    do {
+        got = atomic_xchg(&lk->status, LOCKED);
+    } while (got != UNLOCKED);
+    lk->cpu = cpu_current();
+}
+
+void spin_unlock(spinlock_t *lk) {
+    if (!holding(lk)) panic("release");
+    lk->cpu = -1;
+    atomic_xchg(&lk->status, UNLOCKED);
+    pop_off();
 }
 
 static void spin_init(spinlock_t *lk, const char *name) {
@@ -49,19 +63,6 @@ static void spin_init(spinlock_t *lk, const char *name) {
     pthread_mutex_unlock(&kspin);
 }
 
-static void spin_lock(spinlock_t *lk) {
-    pushcli();
-    if(holding(lk)) panic("acquire");
-    pthread_mutex_lock(&lk->locked);
-    lk->cpu = cpu_current();
-}
-
-static void spin_unlock(spinlock_t *lk) {
-    if(!holding(lk)) panic("release");
-    lk->cpu = -1;
-    pthread_mutex_unlock(&lk->locked);
-    popcli();
-}
 //semaphore
 static void sem_init(sem_t *sem, const char *name, int value) {
     pthread_mutex_lock(&ksem);
@@ -176,7 +177,7 @@ static void kmt_init() {
         idles[i]->fence2 = FENCE2;
         current[i] = NULL;
         last[i] = NULL;
-        cpus[i].ncli = 0;
+        cpus[i].noff = 0;
         cpus[i].intena = 1;
     }
 }
